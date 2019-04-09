@@ -1,16 +1,17 @@
-xmake f -p iphoneos -a armv7 --cxflags="-fembed-bitcode -miphoneos-version-min=9" --mxflags="-fembed-bitcode -miphoneos-version-min=9"
+#!/usr/bin/env bash
+xmake f -p iphoneos -a armv7 --target_minver=9 --cxflags="-fembed-bitcode " --mxflags="-fembed-bitcode"
 xmake p
 
-xmake f -p iphoneos -a armv7s --cxflags="-fembed-bitcode -miphoneos-version-min=9" --mxflags="-fembed-bitcode -miphoneos-version-min=9"
+xmake f -p iphoneos -a armv7s --target_minver=9 --cxflags="-fembed-bitcode" --mxflags="-fembed-bitcode"
 xmake p
 
-xmake f -p iphoneos -a arm64 --cxflags="-fembed-bitcode -miphoneos-version-min=9" --mxflags="-fembed-bitcode -miphoneos-version-min=9"
+xmake f -p iphoneos -a arm64 --target_minver=9 --cxflags="-fembed-bitcode" --mxflags="-fembed-bitcode"
 xmake p
 
-xmake f -p iphoneos -a i386 --cxflags="-fembed-bitcode -miphoneos-version-min=9" --mxflags="-fembed-bitcode -miphoneos-version-min=9"
+xmake f -p iphoneos -a i386 --target_minver=9 --cxflags="-fembed-bitcode" --mxflags="-fembed-bitcode"
 xmake p
 
-xmake f -p iphoneos -a x86_64 --cxflags="-fembed-bitcode -miphoneos-version-min=9" --mxflags="-fembed-bitcode -miphoneos-version-min=9"
+xmake f -p iphoneos -a x86_64 --target_minver=9 --cxflags="-fembed-bitcode" --mxflags="-fembed-bitcode"
 xmake p
 
 mkdir build/iOS/ build/iOS/fat/
