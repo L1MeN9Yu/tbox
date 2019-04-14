@@ -1,18 +1,22 @@
 #!/usr/bin/env bash
-xmake f -p iphoneos -a armv7 --target_minver=9 --cxflags="-fembed-bitcode " --mxflags="-fembed-bitcode"
-xmake p
+rm -rf ./xmake
 
-xmake f -p iphoneos -a armv7s --target_minver=9 --cxflags="-fembed-bitcode" --mxflags="-fembed-bitcode"
-xmake p
+##--coroutine=y
 
-xmake f -p iphoneos -a arm64 --target_minver=9 --cxflags="-fembed-bitcode" --mxflags="-fembed-bitcode"
-xmake p
+xmake f --hash=y --zip=y -p iphoneos -a armv7 --target_minver=9 --cxflags="-fembed-bitcode " --mxflags="-fembed-bitcode"
+xmake p tbox
 
-xmake f -p iphoneos -a i386 --target_minver=9 --cxflags="-fembed-bitcode" --mxflags="-fembed-bitcode"
-xmake p
+xmake f --hash=y --zip=y -p iphoneos -a armv7s --target_minver=9 --cxflags="-fembed-bitcode" --mxflags="-fembed-bitcode"
+xmake p tbox
 
-xmake f -p iphoneos -a x86_64 --target_minver=9 --cxflags="-fembed-bitcode" --mxflags="-fembed-bitcode"
-xmake p
+xmake f --hash=y --zip=y -p iphoneos -a arm64 --target_minver=9 --cxflags="-fembed-bitcode" --mxflags="-fembed-bitcode"
+xmake p tbox
+
+xmake f --hash=y --zip=y -p iphoneos -a i386 --target_minver=9 --cxflags="-fembed-bitcode" --mxflags="-fembed-bitcode"
+xmake p tbox
+
+xmake f --hash=y --zip=y -p iphoneos -a x86_64 --target_minver=9 --cxflags="-fembed-bitcode" --mxflags="-fembed-bitcode"
+xmake p tbox
 
 mkdir build/iOS/ build/iOS/fat/
 
