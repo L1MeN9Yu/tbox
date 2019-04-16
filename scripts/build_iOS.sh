@@ -9,19 +9,19 @@ rm -rf build
 # --charset=y
 # --database=y
 
-xmake f --hash=y --zip=y --coroutine=y --exception=y --object=y --xml=y --charset=y -p iphoneos -a armv7 --target_minver=9 --cxflags="-fembed-bitcode " --mxflags="-fembed-bitcode"
+xmake f --hash=y --zip=y --coroutine=y --exception=y --object=y --xml=y --charset=y -p iphoneos -a armv7 --target_minver=9 --cxflags="-fembed-bitcode " --mxflags="-fembed-bitcode" --asflags="-fembed-bitcode"
 xmake p tbox
 
-xmake f --hash=y --zip=y --coroutine=y --exception=y --object=y --xml=y --charset=y -p iphoneos -a armv7s --target_minver=9 --cxflags="-fembed-bitcode" --mxflags="-fembed-bitcode"
+xmake f --hash=y --zip=y --coroutine=y --exception=y --object=y --xml=y --charset=y -p iphoneos -a armv7s --target_minver=9 --cxflags="-fembed-bitcode" --mxflags="-fembed-bitcode" --asflags="-fembed-bitcode"
 xmake p tbox
 
-xmake f --hash=y --zip=y --coroutine=y --exception=y --object=y --xml=y --charset=y -p iphoneos -a arm64 --target_minver=9 --cxflags="-fembed-bitcode" --mxflags="-fembed-bitcode"
+xmake f --hash=y --zip=y --coroutine=y --exception=y --object=y --xml=y --charset=y -p iphoneos -a arm64 --target_minver=9 --cxflags="-fembed-bitcode" --mxflags="-fembed-bitcode" --asflags="-fembed-bitcode"
 xmake p tbox
 
-xmake f --hash=y --zip=y --coroutine=y --exception=y --object=y --xml=y --charset=y -p iphoneos -a i386 --target_minver=9 --cxflags="-fembed-bitcode" --mxflags="-fembed-bitcode"
+xmake f --hash=y --zip=y --coroutine=y --exception=y --object=y --xml=y --charset=y -p iphoneos -a i386 --target_minver=9 --cxflags="-fembed-bitcode" --mxflags="-fembed-bitcode" --asflags="-fembed-bitcode"
 xmake p tbox
 
-xmake f --hash=y --zip=y --coroutine=y --exception=y --object=y --xml=y --charset=y -p iphoneos -a x86_64 --target_minver=9 --cxflags="-fembed-bitcode" --mxflags="-fembed-bitcode"
+xmake f --hash=y --zip=y --coroutine=y --exception=y --object=y --xml=y --charset=y -p iphoneos -a x86_64 --target_minver=9 --cxflags="-fembed-bitcode" --mxflags="-fembed-bitcode" --asflags="-fembed-bitcode"
 xmake p tbox
 
 mkdir build/iOS/ build/iOS/fat/
