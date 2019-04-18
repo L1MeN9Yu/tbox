@@ -2,38 +2,16 @@
 rm -rf ./xmake
 rm -rf build
 
-# --coroutine=y
-# --exception=y
-# --object=y
-# --xml=y
-# --charset=y
-# --database=y
+xmake m package -p iphoneos -f "--demo=no --exception=y --regex=y --hash=y --zip=y --coroutine=y --exception=y --object=y --xml=y --charset=y --target_minver=8 --cxflags=\"-fembed-bitcode\" --mxflags=\"-fembed-bitcode\" --asflags=\"-fembed-bitcode\""
 
-xmake f --hash=y --zip=y --coroutine=y --exception=y --object=y --xml=y --charset=y -p iphoneos -a armv7 --target_minver=8 --cxflags="-fembed-bitcode " --mxflags="-fembed-bitcode" --asflags="-fembed-bitcode"
-xmake p tbox
+mkdir build/iOS/ build/iOS/fat/ build/iOS/fat/library
 
-xmake f --hash=y --zip=y --coroutine=y --exception=y --object=y --xml=y --charset=y -p iphoneos -a armv7s --target_minver=8 --cxflags="-fembed-bitcode" --mxflags="-fembed-bitcode" --asflags="-fembed-bitcode"
-xmake p tbox
-
-xmake f --hash=y --zip=y --coroutine=y --exception=y --object=y --xml=y --charset=y -p iphoneos -a arm64 --target_minver=8 --cxflags="-fembed-bitcode" --mxflags="-fembed-bitcode" --asflags="-fembed-bitcode"
-xmake p tbox
-
-xmake f --hash=y --zip=y --coroutine=y --exception=y --object=y --xml=y --charset=y -p iphoneos -a i386 --target_minver=8 --cxflags="-fembed-bitcode" --mxflags="-fembed-bitcode" --asflags="-fembed-bitcode"
-xmake p tbox
-
-xmake f --hash=y --zip=y --coroutine=y --exception=y --object=y --xml=y --charset=y -p iphoneos -a x86_64 --target_minver=8 --cxflags="-fembed-bitcode" --mxflags="-fembed-bitcode" --asflags="-fembed-bitcode"
-xmake p tbox
-
-mkdir build/iOS/ build/iOS/fat/
-
-lipo -create \
-build/tbox.pkg/lib/release/iphoneos/armv7/libtbox.a \
-build/tbox.pkg/lib/release/iphoneos/armv7s/libtbox.a \
-build/tbox.pkg/lib/release/iphoneos/arm64/libtbox.a \
-build/tbox.pkg/lib/release/iphoneos/i386/libtbox.a \
-build/tbox.pkg/lib/release/iphoneos/x86_64/libtbox.a \
--output \
-build/iOS/fat/libtbox.a
-
-mv build/tbox.pkg/inc/tbox build/iOS/fat/include
+mv build/tbox.pkg/iphoneos/universal/lib/release/libtbox.a build/iOS/fat/library/libtbox.a
+rm -rf build/tbox.pkg/iphoneos/universal
+rm -rf build/tbox.pkg/iphoneos/armv7/lib/release/
+rm -rf build/tbox.pkg/iphoneos/armv7s/lib/release/
+rm -rf build/tbox.pkg/iphoneos/arm64/lib/release/
+rm -rf build/tbox.pkg/iphoneos/i386/lib/release/
+rm -rf build/tbox.pkg/iphoneos/x86_64/lib/release/
+mv -f build/tbox.pkg/iphoneos build/iOS/fat/include
 rm -rf build/tbox.pkg build/iphoneos
