@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -403,7 +399,7 @@ static tb_bool_t tb_stream_sock_clos(tb_stream_ref_t stream)
 #ifdef TB_SSL_ENABLE
     // close ssl
     if (tb_url_ssl(tb_stream_url(stream)) && stream_sock->hssl)
-        tb_ssl_clos(stream_sock->hssl);
+        tb_ssl_close(stream_sock->hssl);
 #endif
 
     // keep alive? not close it
@@ -706,6 +702,16 @@ static tb_bool_t tb_stream_sock_ctrl(tb_stream_ref_t stream, tb_size_t ctrl, tb_
             // keep alive?
             tb_bool_t keep_alive = (tb_bool_t)tb_va_arg(args, tb_bool_t);
             stream_sock->keep_alive = keep_alive? 1 : 0;
+            return tb_true;
+        }
+    case TB_STREAM_CTRL_SOCK_GET_SOCK:
+        {
+            // the psock
+            tb_socket_ref_t* psock = (tb_socket_ref_t*)tb_va_arg(args, tb_socket_ref_t*);
+            tb_assert_and_check_return_val(psock, tb_false);
+
+            // get sock
+            *psock = stream_sock->sock;
             return tb_true;
         }
     default:

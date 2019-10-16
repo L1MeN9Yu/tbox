@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -27,6 +23,7 @@
  * includes
  */
 #include "iphlpapi.h"
+#include "../../atomic.h"
 #include "../../../utils/utils.h"
 
 /* //////////////////////////////////////////////////////////////////////////////////////
@@ -58,7 +55,7 @@ static tb_bool_t tb_iphlpapi_instance_init(tb_handle_t instance, tb_cpointer_t p
 tb_iphlpapi_ref_t tb_iphlpapi()
 {
     // init
-    static tb_atomic_t      s_binited = 0;
+    static tb_atomic32_t    s_binited = 0;
     static tb_iphlpapi_t    s_iphlpapi = {0};
 
     // init the static instance

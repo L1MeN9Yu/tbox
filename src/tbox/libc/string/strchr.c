@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -38,14 +34,13 @@
 #ifdef TB_CONFIG_LIBC_HAVE_STRCHR
 tb_char_t* tb_strchr(tb_char_t const* s, tb_char_t c)
 {
-    tb_assert_and_check_return_val(s1 && s2, tb_null);
-    return strchr(s1, c);
+    tb_assert(s);
+    return (tb_char_t*)strchr(s, c);
 }
 #else
 tb_char_t* tb_strchr(tb_char_t const* s, tb_char_t c)
 {
     tb_assert_and_check_return_val(s, tb_null);
-
     while (*s)
     {
         if (*s == c) return (tb_char_t* )s;

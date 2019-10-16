@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -109,12 +105,14 @@ typedef enum __tb_stream_ctrl_e
     // the stream for file
 ,   TB_STREAM_CTRL_FILE_GET_MODE            = TB_STREAM_CTRL(TB_STREAM_TYPE_FILE, 1)
 ,   TB_STREAM_CTRL_FILE_SET_MODE            = TB_STREAM_CTRL(TB_STREAM_TYPE_FILE, 2)
-,   TB_STREAM_CTRL_FILE_IS_STREAM           = TB_STREAM_CTRL(TB_STREAM_TYPE_FILE, 3)
+,   TB_STREAM_CTRL_FILE_AS_STREAM           = TB_STREAM_CTRL(TB_STREAM_TYPE_FILE, 3)
+,   TB_STREAM_CTRL_FILE_GET_FILE            = TB_STREAM_CTRL(TB_STREAM_TYPE_FILE, 4)
 
     // the stream for sock
 ,   TB_STREAM_CTRL_SOCK_GET_TYPE            = TB_STREAM_CTRL(TB_STREAM_TYPE_SOCK, 1)
 ,   TB_STREAM_CTRL_SOCK_SET_TYPE            = TB_STREAM_CTRL(TB_STREAM_TYPE_SOCK, 2)
 ,   TB_STREAM_CTRL_SOCK_KEEP_ALIVE          = TB_STREAM_CTRL(TB_STREAM_TYPE_SOCK, 3)
+,   TB_STREAM_CTRL_SOCK_GET_SOCK            = TB_STREAM_CTRL(TB_STREAM_TYPE_SOCK, 4)
 
     // the stream for http
 ,   TB_STREAM_CTRL_HTTP_GET_HEAD            = TB_STREAM_CTRL(TB_STREAM_TYPE_HTTP, 1)

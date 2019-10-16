@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -86,8 +82,11 @@ static __tb_inline_force__ tb_spinlock_ref_t tb_atomic64_lock(tb_atomic64_t* a)
 /* //////////////////////////////////////////////////////////////////////////////////////
  * implementation
  */
-tb_hong_t tb_atomic64_fetch_and_pset_generic(tb_atomic64_t* a, tb_hong_t p, tb_hong_t v)
+tb_bool_t tb_atomic64_compare_and_swap_explicit_generic(tb_atomic64_t* a, tb_int64_t* p, tb_int64_t v, tb_int_t succ, tb_int_t fail)
 {
+    // check
+    tb_assert(a && p);
+
     // the lock
     tb_spinlock_ref_t lock = tb_atomic64_lock(a);
 
@@ -95,76 +94,19 @@ tb_hong_t tb_atomic64_fetch_and_pset_generic(tb_atomic64_t* a, tb_hong_t p, tb_h
     tb_spinlock_enter(lock);
 
     // set value
-    tb_hong_t o = (tb_hong_t)*a; if (o == p) *a = (tb_atomic64_t)v;
+    tb_bool_t ok = tb_false;
+    tb_atomic64_t o = *a;
+    if (o == *p) 
+    {
+        *a = v;
+        ok = tb_true;
+    }
+    else *p = o;
 
     // leave
     tb_spinlock_leave(lock);
 
     // ok?
-    return o;
+    return ok;
 }
-tb_hong_t tb_atomic64_fetch_and_set_generic(tb_atomic64_t* a, tb_hong_t v)
-{
-    // done
-    tb_hong_t o;
-    do
-    {
-        o = *a;
 
-    } while (tb_atomic64_fetch_and_pset(a, o, v) != o);
-
-    // ok
-    return o;
-}
-tb_hong_t tb_atomic64_fetch_and_add_generic(tb_atomic64_t* a, tb_hong_t v)
-{
-    // done
-    tb_hong_t o;
-    do
-    {
-        o = *a;
-
-    } while (tb_atomic64_fetch_and_pset(a, o, o + v) != o);
-
-    // ok
-    return o;
-}
-tb_hong_t tb_atomic64_fetch_and_xor_generic(tb_atomic64_t* a, tb_hong_t v)
-{
-    // done
-    tb_hong_t o;
-    do
-    {
-        o = *a;
-
-    } while (tb_atomic64_fetch_and_pset(a, o, o ^ v) != o);
-
-    // ok
-    return o;
-}
-tb_hong_t tb_atomic64_fetch_and_and_generic(tb_atomic64_t* a, tb_hong_t v)
-{
-    // done
-    tb_hong_t o;
-    do
-    {
-        o = *a;
-
-    } while (tb_atomic64_fetch_and_pset(a, o, o & v) != o);
-
-    // ok
-    return o;
-}
-tb_hong_t tb_atomic64_fetch_and_or_generic(tb_atomic64_t* a, tb_hong_t v)
-{
-    // done
-    tb_hong_t o;
-    do
-    {
-        o = *a;
-
-    } while (tb_atomic64_fetch_and_pset(a, o, o | v) != o);
-
-    // ok
-    return o;
-}

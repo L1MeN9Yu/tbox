@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -48,7 +44,7 @@ tb_object_ref_t     tb_oc_date_init_from_now(tb_noarg_t);
 
 /*! init date from time
  *
- * @param           the date time
+ * @param time      the date time
  *
  * @return          the date object
  */
@@ -56,7 +52,7 @@ tb_object_ref_t     tb_oc_date_init_from_time(tb_time_t time);
 
 /*! the date time
  *
- * @param           the date object
+ * @param date      the date object
  *
  * @return          the date time
  */
@@ -64,8 +60,8 @@ tb_time_t           tb_oc_date_time(tb_object_ref_t date);
 
 /*! set the date time
  *
- * @param           the date object
- * @param           the date time
+ * @param date      the date object
+ * @param time      the date time
  *
  * @return          tb_true or tb_false
  */
@@ -73,7 +69,7 @@ tb_bool_t           tb_oc_date_time_set(tb_object_ref_t date, tb_time_t time);
 
 /*! set the date time for now
  *
- * @param           the date object
+ * @param date      the date object
  *
  * @return          tb_true or tb_false
  */

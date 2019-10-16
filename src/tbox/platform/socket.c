@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -34,6 +30,17 @@
  */
 #include "socket.h"
 #include "impl/socket.h"
+#if defined(TB_CONFIG_MODULE_HAVE_COROUTINE) \
+        && !defined(TB_CONFIG_MICRO_ENABLE)
+#   include "../coroutine/coroutine.h"
+#endif
+
+/* //////////////////////////////////////////////////////////////////////////////////////
+ * declaration
+ */
+__tb_extern_c_enter__
+tb_long_t tb_socket_wait_impl(tb_socket_ref_t sock, tb_size_t events, tb_long_t timeout);
+__tb_extern_c_leave__
 
 /* //////////////////////////////////////////////////////////////////////////////////////
  * implementation
@@ -150,17 +157,28 @@ tb_long_t tb_socket_usendv(tb_socket_ref_t sock, tb_ipaddr_ref_t addr, tb_iovec_
 
 #if defined(TB_CONFIG_OS_WINDOWS)
 #   include "posix/socket_select.c"
-#elif defined(TB_CONFIG_POSIX_HAVE_POLL)
+#elif defined(TB_CONFIG_POSIX_HAVE_POLL) && \
+        !defined(TB_CONFIG_OS_MACOSX) /* poll(fifo) exists bug on macosx, @see demo/platform/named_pipe.c */
 #   include "posix/socket_poll.c"
 #elif defined(TB_CONFIG_POSIX_HAVE_SELECT)
 #   include "posix/socket_select.c"
 #else
-tb_long_t tb_socket_wait(tb_socket_ref_t sock, tb_size_t events, tb_long_t timeout)
+tb_long_t tb_socket_wait_impl(tb_socket_ref_t sock, tb_size_t events, tb_long_t timeout)
 {
     tb_trace_noimpl();
     return -1;
 }
 #endif
+tb_long_t tb_socket_wait(tb_socket_ref_t sock, tb_size_t events, tb_long_t timeout)
+{
+#if defined(TB_CONFIG_MODULE_HAVE_COROUTINE) \
+        && !defined(TB_CONFIG_MICRO_ENABLE)
+    // attempt to wait it in coroutine
+    if (tb_coroutine_self())
+        return tb_coroutine_waitio(sock, events, timeout);
+#endif
+    return tb_socket_wait_impl(sock, events, timeout);
+}
 
 tb_bool_t tb_socket_brecv(tb_socket_ref_t sock, tb_byte_t* data, tb_size_t size)
 {

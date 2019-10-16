@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -47,11 +43,11 @@
 tb_semaphore_ref_t tb_semaphore_init(tb_size_t value)
 {
     // make
-    tb_atomic_t* semaphore = tb_malloc0_type(tb_atomic_t);
+    tb_atomic32_t* semaphore = tb_malloc0_type(tb_atomic32_t);
     tb_assert_and_check_return_val(semaphore, tb_null);
 
     // init
-    *semaphore = value;
+    tb_atomic32_init(semaphore, (tb_int32_t)value);
 
     // ok
     return (tb_semaphore_ref_t)semaphore;
@@ -59,7 +55,7 @@ tb_semaphore_ref_t tb_semaphore_init(tb_size_t value)
 tb_void_t tb_semaphore_exit(tb_semaphore_ref_t self)
 {
     // check
-    tb_atomic_t* semaphore = (tb_atomic_t*)self;
+    tb_atomic32_t* semaphore = (tb_atomic32_t*)self;
     tb_assert_and_check_return(semaphore);
 
     // free it
@@ -68,11 +64,11 @@ tb_void_t tb_semaphore_exit(tb_semaphore_ref_t self)
 tb_bool_t tb_semaphore_post(tb_semaphore_ref_t self, tb_size_t post)
 {
     // check
-    tb_atomic_t* semaphore = (tb_atomic_t*)self;
+    tb_atomic32_t* semaphore = (tb_atomic32_t*)self;
     tb_assert_and_check_return_val(semaphore && post, tb_false);
 
     // post it
-    tb_long_t value = tb_atomic_fetch_and_add(semaphore, post);
+    tb_int32_t value = tb_atomic32_fetch_and_add(semaphore, (tb_int32_t)post);
 
     // ok
     return value >= 0? tb_true : tb_false;
@@ -80,16 +76,16 @@ tb_bool_t tb_semaphore_post(tb_semaphore_ref_t self, tb_size_t post)
 tb_long_t tb_semaphore_value(tb_semaphore_ref_t self)
 {
     // check
-    tb_atomic_t* semaphore = (tb_atomic_t*)self;
+    tb_atomic32_t* semaphore = (tb_atomic32_t*)self;
     tb_assert_and_check_return_val(semaphore, tb_false);
 
     // get value
-    return (tb_long_t)tb_atomic_get(semaphore);
+    return (tb_long_t)tb_atomic32_get(semaphore);
 }
 tb_long_t tb_semaphore_wait(tb_semaphore_ref_t self, tb_long_t timeout)
 {
     // check
-    tb_atomic_t* semaphore = (tb_atomic_t*)self;
+    tb_atomic32_t* semaphore = (tb_atomic32_t*)self;
     tb_assert_and_check_return_val(semaphore, -1);
 
     // init
@@ -100,13 +96,13 @@ tb_long_t tb_semaphore_wait(tb_semaphore_ref_t self, tb_long_t timeout)
     while (1)
     {
         // get post
-        tb_long_t post = (tb_long_t)tb_atomic_get(semaphore);
+        tb_long_t post = (tb_long_t)tb_atomic32_get(semaphore);
 
         // has signal?
         if (post > 0) 
         {
             // semaphore--
-            tb_atomic_fetch_and_dec(semaphore);
+            tb_atomic32_fetch_and_sub(semaphore, 1);
 
             // ok
             r = post;

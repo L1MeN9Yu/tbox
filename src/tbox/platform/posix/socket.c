@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -48,6 +44,15 @@
 #ifdef TB_CONFIG_MODULE_HAVE_COROUTINE
 #   include "../../coroutine/coroutine.h"
 #   include "../../coroutine/impl/impl.h"
+#endif
+
+/* //////////////////////////////////////////////////////////////////////////////////////
+ * macros
+ */
+
+// no sigpipe
+#if !defined(SO_NOSIGPIPE) && defined(MSG_NOSIGNAL)
+#   define SO_NOSIGPIPE MSG_NOSIGNAL
 #endif
 
 /* //////////////////////////////////////////////////////////////////////////////////////
@@ -295,6 +300,33 @@ tb_bool_t tb_socket_ctrl(tb_socket_ref_t sock, tb_size_t ctrl, ...)
             else *pbuff_size = 0;
         }
         break;
+#ifdef SO_NOSIGPIPE
+    case TB_SOCKET_CTRL_SET_NOSIGPIPE:
+        {
+            tb_int_t enable = (tb_int_t)tb_va_arg(args, tb_bool_t);
+            if (!setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, (tb_char_t*)&enable, sizeof(enable)))
+                ok = tb_true;
+        }
+        break;
+#endif
+#ifdef SO_KEEPALIVE
+    case TB_SOCKET_CTRL_SET_KEEPALIVE:
+        {
+            tb_int_t enable = (tb_int_t)tb_va_arg(args, tb_bool_t);
+            if (!setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (tb_char_t*)&enable, sizeof(enable)))
+                ok = tb_true;
+        }
+        break;
+#endif
+#ifdef TCP_KEEPINTVL
+    case TB_SOCKET_CTRL_SET_TCP_KEEPINTVL:
+        {
+            tb_int_t intvl = (tb_int_t)tb_va_arg(args, tb_size_t);
+            if (!setsockopt(fd, IPPROTO_TCP, TCP_KEEPINTVL, (tb_char_t*)&intvl, sizeof(intvl)))
+                ok = tb_true;
+        }
+        break;
+#endif
     default:
         {
             // trace

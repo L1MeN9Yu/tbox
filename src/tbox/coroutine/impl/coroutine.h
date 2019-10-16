@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -64,24 +60,14 @@ typedef struct __tb_coroutine_rs_func_t
 // the coroutine wait type
 typedef struct __tb_coroutine_rs_wait_t
 {
-    /* the timer task pointer for ltimer or timer
-     *
-     * for ltimer:  task
-     * for timer:   task & 0x1
-     */
+    // the timer task pointer for ltimer or timer
     tb_cpointer_t                   task;
 
-    // the socket
-    tb_socket_ref_t                 sock;
-
-    // the waiting events
-    tb_uint16_t                     events          : 6;
-
-    // the cached events
-    tb_uint16_t                     events_cache    : 6;
-
     // is waiting?
-    tb_uint16_t                     waiting         : 1;
+    tb_uint16_t                     is_waiting   : 1;
+
+    // is ltimer?
+    tb_uint16_t                     is_ltimer    : 1;
 
 }tb_coroutine_rs_wait_t;
 

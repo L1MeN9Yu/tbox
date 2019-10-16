@@ -5,13 +5,14 @@ set_project("tbox")
 set_xmakever("2.2.5")
 
 -- set project version
-set_version("1.6.3", {build = "%Y%m%d%H%M"})
+set_version("1.6.4", {build = "%Y%m%d%H%M"})
 
 -- set warning all as error
 set_warnings("all", "error")
 
--- set language: c99, c++11
-set_languages("c99", "cxx11")
+-- set language: c99
+stdc = "c99"
+set_languages(stdc)
 
 -- add defines to config.h
 set_configvar("_GNU_SOURCE", 1)

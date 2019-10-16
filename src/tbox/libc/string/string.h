@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -106,6 +102,9 @@ tb_long_t           tb_strnicmp(tb_char_t const* s1, tb_char_t const* s2, tb_siz
 // strchr
 tb_char_t*          tb_strchr(tb_char_t const* s, tb_char_t c);
 tb_char_t*          tb_strichr(tb_char_t const* s, tb_char_t c);
+
+tb_char_t*          tb_strnchr(tb_char_t const* s, tb_size_t n, tb_char_t c);
+tb_char_t*          tb_strnichr(tb_char_t const* s, tb_size_t n, tb_char_t c);
 
 // strrchr
 tb_char_t*          tb_strrchr(tb_char_t const* s, tb_char_t c);

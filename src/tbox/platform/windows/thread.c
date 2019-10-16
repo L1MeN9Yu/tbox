@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -29,6 +25,13 @@
 #include "prefix.h"
 #include "../thread.h"
 #include <process.h>
+
+/* //////////////////////////////////////////////////////////////////////////////////////
+ * declaration
+ */
+__tb_extern_c_enter__
+tb_void_t tb_thread_local_clear_atexit();
+__tb_extern_c_leave__
 
 /* //////////////////////////////////////////////////////////////////////////////////////
  * implementation
@@ -97,6 +100,10 @@ tb_long_t tb_thread_wait(tb_thread_ref_t thread, tb_long_t timeout, tb_int_t* re
 }
 tb_void_t tb_thread_return(tb_int_t value)
 {
+    // free all thread local data on the current thread
+    tb_thread_local_clear_atexit();
+
+    // exit thread and return value
     ExitThread(value);
 }
 tb_bool_t tb_thread_suspend(tb_thread_ref_t thread)

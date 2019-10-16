@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -399,7 +395,7 @@ static __tb_inline__ tb_void_t                  tb_single_list_entry_remove_safe
 /*! remove the next entry
  *
  * @param list                                  the list
- * @param entry                                 the prev entry
+ * @param prev                                  the prev entry
  */
 static __tb_inline__ tb_void_t                  tb_single_list_entry_remove_next(tb_single_list_entry_head_ref_t list, tb_single_list_entry_ref_t prev)
 {

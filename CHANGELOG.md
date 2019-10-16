@@ -2,13 +2,26 @@
 
 ## master (unreleased)
 
+## v1.6.4
+
 ### New features
 
 * [#70](https://github.com/tboox/tbox/issues/70): Add `tb_stream_init_from_sock_ref()` to open a given socket as stream
+* Add stdfile api to read/write stdin, stdout and stderr.
+* [#81](https://github.com/tboox/tbox/issues/81): Add set/get thread/process cpu affinity 
+* Add filelock api
+* Add anonymous and named pipe
 
 ### Changes
 
 * Optimize queue_buffer module
+* Improve stream interfaces
+* Improve charset encoding and add ANSI support
+* Improve atomic and add c11-like atomic apis
+* Improve spinlock
+* Support to redirect process output to pipe 
+* Uses virtual memory for coroutine stack
+* Improve openssl/mbedtls for https
 
 ## v1.6.3
 
@@ -173,13 +186,26 @@
 
 ## master (开发中)
 
+## v1.6.4
+
 ### 新特性
 
 * [#70](https://github.com/tboox/tbox/issues/70): 添加`tb_stream_init_from_sock_ref()`接口去直接打开一个socket作为stream去读取数据。
+* 添加stdfile接口去读写stdin, stdout和stderr。
+* [#81](https://github.com/tboox/tbox/issues/81): 添加对进程和线程的cpu亲缘性设置和获取
+* 添加filelock文件锁跨平台api接口
+* 添加匿名管道，命名管道支持
 
 ### 改进
 
 * 优化queue_buffer模块
+* 改进stream接口实现
+* 改进字符集编码转换，以及增加对ANSI编码的支持
+* 改进原子操作，并增加c11风格原子接口
+* 改进spinlock实现
+* 新增进程输出重定向到管道
+* 针对协程栈使用虚拟内存
+* 改进基于openssl/mbedtls的https访问
 
 ## v1.6.3
 

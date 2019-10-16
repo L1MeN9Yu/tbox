@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -77,7 +73,7 @@ static tb_bool_t tb_stream_http_clos(tb_stream_ref_t stream)
     tb_assert_and_check_return_val(stream_http && stream_http->http, tb_false);
 
     // close it
-    return tb_http_clos(stream_http->http);
+    return tb_http_close(stream_http->http);
 }
 static tb_void_t tb_stream_http_exit(tb_stream_ref_t stream)
 {

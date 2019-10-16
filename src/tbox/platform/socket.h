@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -62,11 +58,11 @@ typedef enum __tb_socket_type_e
     // socket for udp
 ,   TB_SOCKET_TYPE_UDP                  = TB_SOCKET_TYPE_SOCK_DGRAM  | TB_SOCKET_TYPE_IPPROTO_UDP
 
-#ifdef TB_CONFIG_OS_MACOSX
-    // socket for icmp, only need user permission on macOS
+#if defined(TB_CONFIG_OS_MACOSX) || defined(TB_CONFIG_OS_IOS)
+    // socket for icmp, only need user permission on macOS/iOS
 ,   TB_SOCKET_TYPE_ICMP                 = TB_SOCKET_TYPE_SOCK_DGRAM  | TB_SOCKET_TYPE_IPPROTO_ICMP
 #else
-    // socket for icmp, need root permission on linux/macOS
+    // socket for icmp, need root permission on linux/windows
 ,   TB_SOCKET_TYPE_ICMP                 = TB_SOCKET_TYPE_SOCK_RAW    | TB_SOCKET_TYPE_IPPROTO_ICMP
 #endif
 
@@ -92,6 +88,9 @@ typedef enum __tb_socket_ctrl_e
 ,   TB_SOCKET_CTRL_GET_SEND_BUFF_SIZE   = 5
 ,   TB_SOCKET_CTRL_SET_TCP_NODELAY      = 6
 ,   TB_SOCKET_CTRL_GET_TCP_NODELAY      = 7
+,   TB_SOCKET_CTRL_SET_TCP_KEEPINTVL    = 8
+,   TB_SOCKET_CTRL_SET_KEEPALIVE        = 9
+,   TB_SOCKET_CTRL_SET_NOSIGPIPE        = 10 //!< @note this operation always return true on windows
 
 }tb_socket_ctrl_e;
 
@@ -317,6 +316,8 @@ tb_long_t           tb_socket_urecvv(tb_socket_ref_t sock, tb_ipaddr_ref_t addr,
 tb_long_t           tb_socket_usendv(tb_socket_ref_t sock, tb_ipaddr_ref_t addr, tb_iovec_t const* list, tb_size_t size);
 
 /*! wait socket events
+ *
+ * @note we can wait for socket events in the coroutine
  *
  * @param sock      the sock 
  * @param events    the socket events

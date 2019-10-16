@@ -1,5 +1,8 @@
 <div align="center">
-  <h1>tbox</h1>
+
+  <a href="https://tboox.io">
+    <img width="200" heigth="200" src="https://tboox.io/assets/img/logo_text.png">
+  </a>  
 
   <div>
     <a href="https://travis-ci.org/tboox/tbox">
@@ -52,7 +55,7 @@ TBOX是一个用c语言实现的跨平台开发库。
 - Android
 - iOS
 
-通过[xmake](http://www.xmake.io/cn)支持各种编译模式：
+通过[xmake](https://github.com/xmake-io/xmake))支持各种编译模式：
 
 * Release: 正式版编译，禁用调试信息、断言，各种检测机制，启用编译器优化
 * Debug: 调试模式，默认启用详细调试信息、断言、内存越界检测、内存泄漏、锁竞争分析等检测机制
@@ -62,7 +65,7 @@ TBOX是一个用c语言实现的跨平台开发库。
 如果你想了解更多，请参考：
 
 * [项目主页](https://tboox.org/cn)
-* [在线文档](https://github.com/tboox/tbox/wiki/%E7%9B%AE%E5%BD%95)
+* [在线文档](https://tboox.io/#/zh-cn/getting_started)
 * [Github](https://github.com/tboox/tbox)
 * [Gitee](https://gitee.com/tboox/tbox)
 
@@ -283,7 +286,7 @@ int main(int argc, char** argv)
     }
 
     // wait 
-    getchar();
+    tb_getchar();
 
     // exit tbox
     tb_exit();
@@ -296,6 +299,6 @@ int main(int argc, char** argv)
 * 邮箱：[waruqi@gmail.com](mailto:waruqi@gmail.com)
 * 主页：[TBOOX开源工程](https://tboox.org/cn)
 * 社区：[Reddit论坛](https://www.reddit.com/r/tboox/)
-* QQ群：343118190
+* QQ群：343118190(满), 662147501
 * 微信公众号：tboox-os
 

@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -164,15 +160,16 @@ static tb_long_t tb_stream_data_wait(tb_stream_ref_t stream, tb_size_t wait, tb_
 {
     // check
     tb_stream_data_t* stream_data = tb_stream_data_cast(stream);
-    tb_assert_and_check_return_val(stream_data && stream_data->head <= stream_data->data + stream_data->size, -1);
+    tb_assert_and_check_return_val(stream_data, -1);
 
     // wait 
     tb_long_t events = 0;
-    if (!tb_stream_beof((tb_stream_ref_t)stream))
+    if (stream_data->head < stream_data->data + stream_data->size)
     {
         if (wait & TB_STREAM_WAIT_READ) events |= TB_STREAM_WAIT_READ;
         if (wait & TB_STREAM_WAIT_WRIT) events |= TB_STREAM_WAIT_WRIT;
     }
+    else events = -1;
 
     // ok?
     return events;

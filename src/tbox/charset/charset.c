@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -28,6 +24,7 @@
  */
 #include "charset.h"
 #include "../algorithm/algorithm.h"
+#include "../platform/impl/charset.h"
 
 /* //////////////////////////////////////////////////////////////////////////////////////
  * declaration
@@ -162,6 +159,10 @@ tb_long_t tb_charset_conv_bst(tb_size_t ftype, tb_size_t ttype, tb_static_stream
     // check
     tb_assert_and_check_return_val(TB_CHARSET_TYPE_OK(ftype) && TB_CHARSET_TYPE_OK(ttype) && fst && tst, -1);
     tb_assert_and_check_return_val(tb_static_stream_valid(fst) && tb_static_stream_valid(tst), -1);
+
+    // attempt to convert charset using the platform implementation
+    tb_long_t ok = tb_charset_conv_impl(ftype, ttype, fst, tst);
+    tb_check_return_val(ok < 0, ok);
 
     // init the charset
     tb_charset_ref_t fr = tb_charset_find_by_type(ftype);

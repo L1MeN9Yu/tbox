@@ -1,5 +1,14 @@
+<p align="center">
+  <a href="https://codefund.io/properties/521/visit-sponsor">
+    <img src="https://codefund.io/properties/521/sponsor" />
+  </a>
+</p>
+
 <div align="center">
-  <h1>tbox</h1>
+
+  <a href="https://tboox.io">
+    <img width="200" heigth="200" src="https://tboox.io/assets/img/logo_text.png">
+  </a>  
 
   <div>
     <a href="https://travis-ci.org/tboox/tbox">
@@ -51,7 +60,7 @@ It supports the following platforms:
 - Android
 - iOS
 
-And it provides many compiling options using [xmake](http://www.xmake.io):
+And it provides many compiling options using [xmake](https://github.com/xmake-io/xmake):
 
 * Release: Disable debug information, assertion, memory checking and enable optimization.
 * Debug: Enable debug information, assertion, memory checking and disable optimization.
@@ -61,7 +70,7 @@ And it provides many compiling options using [xmake](http://www.xmake.io):
 If you want to know more, please refer to:
 
 * [HomePage](https://tboox.org)
-* [Documents](https://github.com/tboox/tbox/wiki/documents)
+* [Documents](https://tboox.io/#/getting_started)
 * [Github](https://github.com/tboox/tbox)
 * [Gitee](https://gitee.com/tboox/tbox)
 
@@ -276,7 +285,7 @@ int main(int argc, char** argv)
     }
 
     // wait 
-    getchar();
+    tb_getchar();
 
     // exit tbox
     tb_exit();
@@ -289,4 +298,6 @@ int main(int argc, char** argv)
 * Email：[waruqi@gmail.com](mailto:waruqi@gmail.com)
 * Homepage：[tboox.org](https://tboox.org)
 * Community：[/r/tboox on reddit](https://www.reddit.com/r/tboox/)
+* QQ Group: 343118190(full), 662147501
+* Wechat Public: tboox-os
 

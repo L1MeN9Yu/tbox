@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -43,7 +39,7 @@ __tb_extern_c_enter__
 /*! the timer task func type
  *
  * @param killed    is killed?
- * @param data      the timer data
+ * @param priv      the timer data
  */
 typedef tb_void_t   (*tb_timer_task_func_t)(tb_bool_t killed, tb_cpointer_t priv);
 
@@ -139,7 +135,6 @@ tb_bool_t           tb_timer_spak(tb_timer_ref_t timer);
  *
  * @param timer     the timer 
  *
- * @return          tb_true or tb_false
  */
 tb_void_t           tb_timer_loop(tb_timer_ref_t timer);
 

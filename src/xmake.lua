@@ -1,4 +1,5 @@
 includes("check_cfuncs.lua")
+includes("check_csnippets.lua")
 
 -- option: demo
 option("demo")
@@ -80,6 +81,20 @@ option("deprecated")
     set_configvar("TB_CONFIG_API_HAVE_DEPRECATED", 1)
 option_end()
 
+-- option: force-utf8
+option("force-utf8")
+    set_default(false)
+    set_showmenu(true)
+    set_category("option")
+    set_description("Forcely regard all tb_char* as utf-8.")
+    set_configvar("TB_CONFIG_FORCE_UTF8", 1)
+    before_check(function (option)
+        if is_plat("windows") then
+            option:add("cxflags", "/utf-8")
+        end
+    end)
+option_end()
+
 -- add modules
 for _, name in ipairs({"xml", "zip", "hash", "regex", "object", "charset", "database", "coroutine"}) do
     option(name)
@@ -147,8 +162,13 @@ end
 function check_module_cfuncs(module, includes, ...)
     for _, func in ipairs({...}) do
         local funcname = get_function_name(func)
-        configvar_check_cfuncs(("TB_CONFIG_%s_HAVE_%s"):format(module:upper(), funcname:upper()), func, {name = module .. "_" .. funcname, includes = includes})
+        configvar_check_cfuncs(("TB_CONFIG_%s_HAVE_%s"):format(module:upper(), funcname:upper()), func, {name = module .. "_" .. funcname, includes = includes, defines = "_GNU_SOURCE=1"})
     end
+end
+
+-- check c snippet in the given module
+function check_module_csnippet(module, includes, name, snippet, opt)
+    configvar_check_csnippets(("TB_CONFIG_%s_HAVE_%s"):format(module:upper(), name:upper()), snippet, table.join({name = module .. "_" .. name, includes = includes, defines = "_GNU_SOURCE=1"}, opt))
 end
 
 -- check interfaces
@@ -169,6 +189,8 @@ function check_interfaces()
         "strlen",
         "strnlen",
         "strstr",
+        "strchr",
+        "strrchr",
         "strcasestr",
         "strcmp",
         "strcasecmp",
@@ -195,7 +217,7 @@ function check_interfaces()
     check_module_cfuncs("libc", {"signal.h", "setjmp.h"},           "signal", "setjmp", "sigsetjmp{sigjmp_buf buf; sigsetjmp(buf, 0);}", "kill")
     check_module_cfuncs("libc", "execinfo.h",                       "backtrace")
     check_module_cfuncs("libc", "locale.h",                         "setlocale")
-    check_module_cfuncs("libc", "stdio.h",                          "fputs")
+    check_module_cfuncs("libc", "stdio.h",                          "fputs", "fgets", "fgetc", "ungetc", "fputc", "fread", "fwrite")
     check_module_cfuncs("libc", "stdlib.h",                         "srandom", "random")
 
     -- add the interfaces for libm
@@ -236,7 +258,8 @@ function check_interfaces()
         "pthread_setspecific", 
         "pthread_getspecific",
         "pthread_key_create",
-        "pthread_key_delete")
+        "pthread_key_delete",
+        "pthread_setaffinity_np") -- need _GNU_SOURCE 
     check_module_cfuncs("posix", {"sys/socket.h", "fcntl.h"},        "socket")
     check_module_cfuncs("posix", "dirent.h",                         "opendir")
     check_module_cfuncs("posix", "dlfcn.h",                          "dlopen")
@@ -245,7 +268,7 @@ function check_interfaces()
     check_module_cfuncs("posix", "ifaddrs.h",                        "getifaddrs")
     check_module_cfuncs("posix", "semaphore.h",                      "sem_init")
     check_module_cfuncs("posix", "unistd.h",                         "getpagesize", "sysconf")
-    check_module_cfuncs("posix", "sched.h",                          "sched_yield")
+    check_module_cfuncs("posix", "sched.h",                          "sched_yield", "sched_setaffinity") -- need _GNU_SOURCE 
     check_module_cfuncs("posix", "regex.h",                          "regcomp", "regexec")
     check_module_cfuncs("posix", "sys/uio.h",                        "readv", "writev", "preadv", "pwritev")
     check_module_cfuncs("posix", "unistd.h",                         "pread64", "pwrite64")
@@ -259,12 +282,74 @@ function check_interfaces()
     check_module_cfuncs("posix", "unistd.h",                         "getdtablesize")
     check_module_cfuncs("posix", "sys/resource.h",                   "getrlimit")
     check_module_cfuncs("posix", "netdb.h",                          "getaddrinfo", "getnameinfo", "gethostbyname", "gethostbyaddr")
+    check_module_cfuncs("posix", "fcntl.h",                          "fcntl")
+    check_module_cfuncs("posix", "unistd.h",                         "pipe", "pipe2")
+    check_module_cfuncs("posix", "sys/stat.h",                       "mkfifo")
+    check_module_cfuncs("posix", "sys/mman.h",                       "mmap")
+
+    -- add the interfaces for windows/msvc
+    if is_plat("windows") then
+        for _, mo in ipairs({"", "_nf", "_acq", "_rel"}) do
+            check_module_csnippet("windows", "windows.h", "_InterlockedExchange" .. mo, format([[
+                LONG _InterlockedExchange%s(LONG volatile* Destination, LONG Value);
+                #pragma intrinsic(_InterlockedExchange%s)
+                void test() {
+                    _InterlockedExchange%s(0, 0);
+                }]], mo, mo, mo), {cxflags = "-WX -W3"})
+            check_module_csnippet("windows", "windows.h", "_InterlockedExchange8" .. mo, format([[
+                CHAR _InterlockedExchange8%s(CHAR volatile* Destination, CHAR Value);
+                #pragma intrinsic(_InterlockedExchange8%s)
+                void test() {
+                    _InterlockedExchange8%s(0, 0);
+                }]], mo, mo, mo), {cxflags = "-WX -W3"})
+            check_module_csnippet("windows", "windows.h", "_InterlockedOr8" .. mo, format([[
+                CHAR _InterlockedOr8%s(CHAR volatile* Destination, CHAR Value);
+                #pragma intrinsic(_InterlockedOr8%s)
+                void test() {
+                    _InterlockedOr8%s(0, 0);
+                }]], mo, mo, mo), {cxflags = "-WX -W3"})
+            check_module_csnippet("windows", "windows.h", "_InterlockedExchangeAdd" .. mo, format([[
+                LONG _InterlockedExchangeAdd%s(LONG volatile* Destination, LONG Value);
+                #pragma intrinsic(_InterlockedExchangeAdd%s)
+                void test() {
+                    _InterlockedExchangeAdd%s(0, 0);
+                }]], mo, mo, mo), {cxflags = "-WX -W3"})
+            check_module_csnippet("windows", "windows.h", "_InterlockedExchangeAdd64" .. mo, format([[
+                __int64 _InterlockedExchangeAdd64%s(__int64 volatile* Destination, __int64 Value);
+                #pragma intrinsic(_InterlockedExchangeAdd64%s)
+                void test() {
+                    _InterlockedExchangeAdd64%s(0, 0);
+                }]], mo, mo, mo), {cxflags = "-WX -W3"})
+            check_module_csnippet("windows", "windows.h", "_InterlockedCompareExchange" .. mo, format([[
+                LONG _InterlockedCompareExchange%s(LONG volatile* Destination, LONG Exchange, LONG Comperand);
+                #pragma intrinsic(_InterlockedCompareExchange%s)
+                void test() {
+                    _InterlockedCompareExchange%s(0, 0, 0);
+                }]], mo, mo, mo), {cxflags = "-WX -W3"})
+            check_module_csnippet("windows", "windows.h", "_InterlockedCompareExchange64" .. mo, format([[
+                __int64 _InterlockedCompareExchange64%s(__int64 volatile* Destination, __int64 Exchange, __int64 Comperand);
+                #pragma intrinsic(_InterlockedCompareExchange64%s)
+                void test() {
+                    _InterlockedCompareExchange64%s(0, 0, 0);
+                }]], mo, mo, mo), {cxflags = "-WX -W3"})
+        end
+    end
+
+    -- add the interfaces for freebsd
+    check_module_cfuncs("freebsd", {"sys/file.h", "fcntl.h"},        "flock")
 
     -- add the interfaces for systemv
     check_module_cfuncs("systemv", {"sys/sem.h", "sys/ipc.h"},       "semget", "semtimedop")
 
     -- add the interfaces for valgrind
     check_module_cfuncs("valgrind", "valgrind/valgrind.h",           "VALGRIND_STACK_REGISTER(0, 0)")
+
+    -- check __thread keyword
+    configvar_check_csnippets("TB_CONFIG_KEYWORD_HAVE__thread", "__thread int a = 0;", {name = "keyword_thread", links = "pthread", languages = stdc})
+    configvar_check_csnippets("TB_CONFIG_KEYWORD_HAVE_Thread_local", "_Thread_local int a = 0;", {name = "keyword_thread_local", links = "pthread", languages = stdc})
+
+    -- check anonymous union feature
+    configvar_check_csnippets("TB_CONFIG_FEATURE_HAVE_ANONYMOUS_UNION", "void test() { struct __st { union {int dummy;};} a; a.dummy = 1; }", {name = "feature_anonymous_union", languages = stdc})
 end
 
 -- include project directories

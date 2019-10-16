@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -31,6 +27,7 @@
 #include "../atomic.h"
 #include "../memory.h"
 #include "../dynamic.h"
+#include "../native_memory.h"
 #if 0
 #   include <unwind.h>
 #   include <dlfcn.h>
@@ -184,8 +181,8 @@ tb_size_t tb_backtrace_frames(tb_pointer_t* frames, tb_size_t nframe, tb_size_t 
     do
     {
         // load libcorkscrew.so?
-        static tb_atomic_t g_loaded = 0;
-        if (!tb_atomic_fetch_and_set(&g_loaded, 1))
+        static tb_atomic_flag_t g_loaded = TB_ATOMIC_FLAG_INIT;
+        if (!tb_atomic_flag_test_and_set(&g_loaded))
         {
             // init dynamic
             tb_dynamic_ref_t dynamic = tb_dynamic_init("/system/lib/libcorkscrew.so");

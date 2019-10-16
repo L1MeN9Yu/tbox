@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -60,7 +56,7 @@ tb_long_t tb_charset_utf16_get(tb_static_stream_ref_t sstream, tb_bool_t be, tb_
         {
             c = ((c - 0xd800) << 10) + (c2 - 0xdc00) + 0x0010000;
             p += 2;
-        };
+        }
     };
 
     // next
@@ -114,7 +110,7 @@ tb_long_t tb_charset_utf16_set(tb_static_stream_ref_t sstream, tb_bool_t be, tb_
             tb_static_stream_writ_u16_le(sstream, (ch >> 10) + 0xd800);
             tb_static_stream_writ_u16_le(sstream, (ch & 0x3ff) + 0xdc00);
         }
-    };
+    }
 
     // ok
     return 1;

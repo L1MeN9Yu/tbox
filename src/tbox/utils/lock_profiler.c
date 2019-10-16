@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -59,7 +55,7 @@ typedef struct __tb_lock_profiler_item_t
     tb_atomic_t                     lock;
 
     // the occupied count
-    tb_atomic_t                     size;
+    tb_atomic32_t                   size;
 
     // the lock name
     tb_atomic_t                     name;
@@ -79,38 +75,33 @@ typedef struct __tb_lock_profiler_t
  */
 static tb_handle_t tb_lock_profiler_instance_init(tb_cpointer_t* ppriv)
 {
-    return tb_lock_profiler_init();
+    return (tb_handle_t)tb_lock_profiler_init();
 }
 static tb_void_t tb_lock_profiler_instance_exit(tb_handle_t handle, tb_cpointer_t priv)
 {
-    // dump it
-    tb_lock_profiler_dump(handle);
-
-    // exit it
-    tb_lock_profiler_exit(handle);
+    tb_lock_profiler_dump((tb_lock_profiler_ref_t)handle);
+    tb_lock_profiler_exit((tb_lock_profiler_ref_t)handle);
 }
 
 /* //////////////////////////////////////////////////////////////////////////////////////
  * implementation
  */
-tb_handle_t tb_lock_profiler()
+tb_lock_profiler_ref_t tb_lock_profiler()
 {
-    return tb_singleton_instance(TB_SINGLETON_TYPE_LOCK_PROFILER, tb_lock_profiler_instance_init, tb_lock_profiler_instance_exit, tb_null, tb_null);
+    return (tb_lock_profiler_ref_t)tb_singleton_instance(TB_SINGLETON_TYPE_LOCK_PROFILER, tb_lock_profiler_instance_init, tb_lock_profiler_instance_exit, tb_null, tb_null);
 }
-tb_handle_t tb_lock_profiler_init()
+tb_lock_profiler_ref_t tb_lock_profiler_init()
 {
-    // init profiler
-    return (tb_handle_t)tb_native_memory_malloc0(sizeof(tb_lock_profiler_t));
+    return (tb_lock_profiler_ref_t)tb_native_memory_malloc0(sizeof(tb_lock_profiler_t));
 }
-tb_void_t tb_lock_profiler_exit(tb_handle_t handle)
+tb_void_t tb_lock_profiler_exit(tb_lock_profiler_ref_t self)
 {
-    // exit profiler
-    if (handle) tb_native_memory_free(handle);
+    if (self) tb_native_memory_free((tb_pointer_t)self);
 }
-tb_void_t tb_lock_profiler_dump(tb_handle_t handle)
+tb_void_t tb_lock_profiler_dump(tb_lock_profiler_ref_t self)
 {
     // check
-    tb_lock_profiler_t* profiler = (tb_lock_profiler_t*)handle;
+    tb_lock_profiler_t* profiler = (tb_lock_profiler_t*)self;
     tb_assert_and_check_return(profiler);
 
     // trace
@@ -129,14 +120,14 @@ tb_void_t tb_lock_profiler_dump(tb_handle_t handle)
         if ((lock = (tb_pointer_t)tb_atomic_get(&item->lock)))
         {
             // dump lock
-            tb_trace_i("lock: %p, name: %s, occupied: %ld", lock, (tb_char_t const*)tb_atomic_get(&item->name), tb_atomic_get(&item->size));
+            tb_trace_i("lock: %p, name: %s, occupied: %d", lock, (tb_char_t const*)tb_atomic_get(&item->name), tb_atomic32_get(&item->size));
         }
     }
 }
-tb_void_t tb_lock_profiler_register(tb_handle_t handle, tb_pointer_t lock, tb_char_t const* name)
+tb_void_t tb_lock_profiler_register(tb_lock_profiler_ref_t self, tb_pointer_t lock, tb_char_t const* name)
 {
     // check
-    tb_lock_profiler_t* profiler = (tb_lock_profiler_t*)handle;
+    tb_lock_profiler_t* profiler = (tb_lock_profiler_t*)self;
     tb_assert_and_check_return(profiler && lock);
 
     // trace
@@ -156,10 +147,12 @@ tb_void_t tb_lock_profiler_register(tb_handle_t handle, tb_pointer_t lock, tb_ch
         tb_lock_profiler_item_t* item = &profiler->list[addr & (TB_LOCK_PROFILER_MAXN - 1)];
 
         // try to register the lock
-        if (!tb_atomic_fetch_and_pset(&item->lock, 0, (tb_long_t)lock))
+        tb_long_t zero = 0;
+        if (tb_atomic_compare_and_swap(&item->lock, &zero, (tb_long_t)lock))
         {
             // init name
             tb_atomic_set(&item->name, (tb_long_t)name);
+            tb_atomic32_init(&item->size, 0);
 
             // trace
             tb_trace_d("register: lock: %p, name: %s, index: %lu: ok", lock, name, addr & (TB_LOCK_PROFILER_MAXN - 1));
@@ -176,10 +169,10 @@ tb_void_t tb_lock_profiler_register(tb_handle_t handle, tb_pointer_t lock, tb_ch
         tb_trace_w("register: lock: %p, name: %s: no", lock, name);
     }
 }
-tb_void_t tb_lock_profiler_occupied(tb_handle_t handle, tb_pointer_t lock)
+tb_void_t tb_lock_profiler_occupied(tb_lock_profiler_ref_t self, tb_pointer_t lock)
 {
     // check
-    tb_lock_profiler_t* profiler = (tb_lock_profiler_t*)handle;
+    tb_lock_profiler_t* profiler = (tb_lock_profiler_t*)self;
     tb_check_return(profiler && lock);
 
     // the lock address
@@ -199,7 +192,7 @@ tb_void_t tb_lock_profiler_occupied(tb_handle_t handle, tb_pointer_t lock)
         if (lock == (tb_pointer_t)tb_atomic_get(&item->lock))
         {
             // occupied++
-            tb_atomic_fetch_and_inc(&item->size);
+            tb_atomic32_fetch_and_add(&item->size, 1);
 
             // ok
             break;

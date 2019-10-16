@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -27,6 +23,7 @@
  * includes
  */
 #include "environment.h"
+#include "path.h"
 
 /* //////////////////////////////////////////////////////////////////////////////////////
  * macros
@@ -78,7 +75,7 @@ tb_bool_t tb_environment_replace(tb_environment_ref_t environment, tb_char_t con
     tb_vector_clear(environment);
 
     // insert value
-    if (value) tb_vector_insert_tail(environment, value);
+    if (value && *value != '\0') tb_vector_insert_tail(environment, value);
 
     // ok
     return tb_true;
@@ -87,6 +84,7 @@ tb_bool_t tb_environment_insert(tb_environment_ref_t environment, tb_char_t cons
 {
     // check
     tb_assert_and_check_return_val(environment && value, tb_false);
+    tb_check_return_val(*value != '\0', tb_true);
 
     // insert value into the head
     if (to_head) tb_vector_insert_head(environment, value);

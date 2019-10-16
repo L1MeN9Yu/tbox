@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -29,7 +25,6 @@
  * includes
  */
 #include "../tbox/tbox.h"
-#include <stdio.h>
 #include <stdlib.h>
 
 /* //////////////////////////////////////////////////////////////////////////////////////
@@ -157,18 +152,22 @@ TB_DEMO_MAIN_DECL(network_impl_date);
 TB_DEMO_MAIN_DECL(platform_file);
 TB_DEMO_MAIN_DECL(platform_lock);
 TB_DEMO_MAIN_DECL(platform_path);
+TB_DEMO_MAIN_DECL(platform_sched);
 TB_DEMO_MAIN_DECL(platform_event);
 TB_DEMO_MAIN_DECL(platform_utils);
 TB_DEMO_MAIN_DECL(platform_timer);
 TB_DEMO_MAIN_DECL(platform_ltimer);
 TB_DEMO_MAIN_DECL(platform_atomic);
-TB_DEMO_MAIN_DECL(platform_process);
-TB_DEMO_MAIN_DECL(platform_barrier);
+TB_DEMO_MAIN_DECL(platform_atomic32);
 TB_DEMO_MAIN_DECL(platform_atomic64);
+TB_DEMO_MAIN_DECL(platform_stdfile);
+TB_DEMO_MAIN_DECL(platform_process);
 TB_DEMO_MAIN_DECL(platform_ifaddrs);
+TB_DEMO_MAIN_DECL(platform_filelock);
 TB_DEMO_MAIN_DECL(platform_addrinfo);
 TB_DEMO_MAIN_DECL(platform_hostname);
-TB_DEMO_MAIN_DECL(platform_processor);
+TB_DEMO_MAIN_DECL(platform_pipe_pair);
+TB_DEMO_MAIN_DECL(platform_named_pipe);
 TB_DEMO_MAIN_DECL(platform_backtrace);
 TB_DEMO_MAIN_DECL(platform_directory);
 TB_DEMO_MAIN_DECL(platform_exception);
@@ -178,6 +177,8 @@ TB_DEMO_MAIN_DECL(platform_environment);
 TB_DEMO_MAIN_DECL(platform_thread);
 TB_DEMO_MAIN_DECL(platform_thread_pool);
 TB_DEMO_MAIN_DECL(platform_thread_local);
+TB_DEMO_MAIN_DECL(platform_poller_client);
+TB_DEMO_MAIN_DECL(platform_poller_server);
 TB_DEMO_MAIN_DECL(platform_context);
 
 // container

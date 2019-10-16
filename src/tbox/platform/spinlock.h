@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -30,6 +26,7 @@
  * includes
  */
 #include "prefix.h"
+#include "cpu.h"
 #include "sched.h"
 #include "atomic.h"
 #include "../utils/lock_profiler.h"
@@ -39,7 +36,7 @@
  */
 
 // the initial value
-#define TB_SPINLOCK_INIT            (0)
+#define TB_SPINLOCK_INIT            TB_ATOMIC_FLAG_INIT
 
 /* //////////////////////////////////////////////////////////////////////////////////////
  * interfaces
@@ -55,11 +52,7 @@ static __tb_inline_force__ tb_bool_t tb_spinlock_init(tb_spinlock_ref_t lock)
 {
     // check
     tb_assert(lock);
-
-    // init 
-    *lock = 0;
-
-    // ok
+    tb_atomic_flag_clear_explicit(lock, TB_ATOMIC_RELAXED);
     return tb_true;
 }
 
@@ -71,9 +64,7 @@ static __tb_inline_force__ tb_void_t tb_spinlock_exit(tb_spinlock_ref_t lock)
 {
     // check
     tb_assert(lock);
-
-    // exit 
-    *lock = 0;
+    tb_atomic_flag_clear_explicit(lock, TB_ATOMIC_RELAXED);
 }
 
 /*! enter spinlock
@@ -85,17 +76,26 @@ static __tb_inline_force__ tb_void_t tb_spinlock_enter(tb_spinlock_ref_t lock)
     // check
     tb_assert(lock);
 
-    // init tryn
-    tb_size_t tryn = 5;
-    
     // init occupied
 #ifdef TB_LOCK_PROFILER_ENABLE
     tb_bool_t occupied = tb_false;
 #endif
 
+    // get cpu count
+#if defined(tb_cpu_pause) && !defined(TB_CONFIG_MICRO_ENABLE)
+    tb_size_t ncpu = tb_cpu_count();
+#endif
+
     // lock it
-    while (tb_atomic_fetch_and_pset((tb_atomic_t*)lock, 0, 1))
+    while (1)
     {
+        /* try non-atomic directly reading to reduce the performance loss of atomic synchronization,
+         * this maybe read some dirty data, but only leads to enter wait state fastly, 
+         * but does not affect to acquire lock.
+         */
+        if (!tb_atomic_flag_test_noatomic(lock) && !tb_atomic_flag_test_and_set(lock))
+            return ;
+
 #ifdef TB_LOCK_PROFILER_ENABLE
         // occupied
         if (!occupied)
@@ -111,16 +111,34 @@ static __tb_inline_force__ tb_void_t tb_spinlock_enter(tb_spinlock_ref_t lock)
         }
 #endif
 
-        // yield the processor
-        if (!tryn--)
+#if defined(tb_cpu_pause) && !defined(TB_CONFIG_MICRO_ENABLE)
+        if (ncpu > 1)
         {
-            // yield
-            tb_sched_yield();
-//          tb_usleep(1);
+            tb_size_t i, n;
+            for (n = 1; n < 2048; n <<= 1)
+            {
+                /* spin_Lock:
+                 *    cmp lockvar, 0   ; check if lock is free
+                 *    je get_Lock
+                 *    pause            ; wait for memory pipeline to become empty
+                 *    jmp spin_Lock
+                 * get_Lock:
+                 *
+                 * The PAUSE instruction will "de-pipeline" the memory reads, 
+                 * so that the pipeline is not filled with speculative CMP (2) instructions like in the first example. 
+                 * (I.e. it could block the pipeline until all older memory instructions are committed.) 
+                 * Because the CMP instructions (2) execute sequentially it is unlikely (i.e. the time window is much shorter) 
+                 * that an external write occurs after the CMP instruction (2) read lockvar but before the CMP is committed.
+                 */
+                for (i = 0; i < n; i++) 
+                    tb_cpu_pause();
 
-            // reset tryn
-            tryn = 5;
+                if (!tb_atomic_flag_test_noatomic(lock) && !tb_atomic_flag_test_and_set(lock)) 
+                    return ;
+            }
         }
+#endif
+        tb_sched_yield();
     }
 }
 
@@ -133,22 +151,30 @@ static __tb_inline_force__ tb_void_t tb_spinlock_enter_without_profiler(tb_spinl
     // check
     tb_assert(lock);
 
-    // init tryn
-    tb_size_t tryn = 5;
-    
     // lock it
-    while (tb_atomic_fetch_and_pset((tb_atomic_t*)lock, 0, 1))
+#if defined(tb_cpu_pause) && !defined(TB_CONFIG_MICRO_ENABLE)
+    tb_size_t ncpu = tb_cpu_count();
+#endif
+    while (1)
     {
-        // yield the processor
-        if (!tryn--)
-        {
-            // yield
-            tb_sched_yield();
-//          tb_usleep(1);
+        if (!tb_atomic_flag_test_noatomic(lock) && !tb_atomic_flag_test_and_set(lock)) 
+            return ;
 
-            // reset tryn
-            tryn = 5;
+#if defined(tb_cpu_pause) && !defined(TB_CONFIG_MICRO_ENABLE)
+        if (ncpu > 1)
+        {
+            tb_size_t i, n;
+            for (n = 1; n < 2048; n <<= 1)
+            {
+                for (i = 0; i < n; i++) 
+                    tb_cpu_pause();
+
+                if (!tb_atomic_flag_test_noatomic(lock) && !tb_atomic_flag_test_and_set(lock)) 
+                    return ;
+            }
         }
+#endif
+        tb_sched_yield();
     }
 }
 
@@ -165,10 +191,10 @@ static __tb_inline_force__ tb_bool_t tb_spinlock_enter_try(tb_spinlock_ref_t loc
 
 #ifndef TB_LOCK_PROFILER_ENABLE
     // try locking it
-    return !tb_atomic_fetch_and_pset((tb_atomic_t*)lock, 0, 1);
+    return !tb_atomic_flag_test_and_set(lock);
 #else
     // try locking it
-    tb_bool_t ok = !tb_atomic_fetch_and_pset((tb_atomic_t*)lock, 0, 1);
+    tb_bool_t ok = !tb_atomic_flag_test_and_set(lock);
 
     // occupied?
     if (!ok) tb_lock_profiler_occupied(tb_lock_profiler(), (tb_pointer_t)lock);
@@ -190,7 +216,7 @@ static __tb_inline_force__ tb_bool_t tb_spinlock_enter_try_without_profiler(tb_s
     tb_assert(lock);
 
     // try locking it
-    return !tb_atomic_fetch_and_pset((tb_atomic_t*)lock, 0, 1);
+    return !tb_atomic_flag_test_and_set(lock);
 }
 
 /*! leave spinlock
@@ -203,7 +229,7 @@ static __tb_inline_force__ tb_void_t tb_spinlock_leave(tb_spinlock_ref_t lock)
     tb_assert(lock);
 
     // leave
-    *((tb_atomic_t*)lock) = 0;
+    tb_atomic_flag_clear(lock);
 }
 
 #endif

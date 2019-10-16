@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -57,7 +53,6 @@ tb_co_semaphore_ref_t   tb_co_semaphore_init(tb_size_t value);
 
 /*! exit semaphore
  * 
- * @return              the semaphore 
  */
 tb_void_t               tb_co_semaphore_exit(tb_co_semaphore_ref_t semaphore);
 
@@ -66,7 +61,6 @@ tb_void_t               tb_co_semaphore_exit(tb_co_semaphore_ref_t semaphore);
  * @param semaphore     the semaphore 
  * @param post          the post semaphore value
  *
- * @return              tb_true or tb_false
  */
 tb_void_t               tb_co_semaphore_post(tb_co_semaphore_ref_t semaphore, tb_size_t post);
 

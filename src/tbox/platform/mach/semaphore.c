@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -44,7 +40,7 @@ typedef struct __tb_semaphore_impl_t
     semaphore_t         semaphore;
 
     // the value
-    tb_atomic_t         value;
+    tb_atomic32_t       value;
 
 }tb_semaphore_impl_t;
 
@@ -66,7 +62,7 @@ tb_semaphore_ref_t tb_semaphore_init(tb_size_t init)
         if (KERN_SUCCESS != semaphore_create(mach_task_self(), &(impl->semaphore), SYNC_POLICY_FIFO, init)) break;
 
         // init value
-        impl->value = init;
+        tb_atomic32_init(&impl->value, (tb_int32_t)init);
 
         // ok
         ok = tb_true;
@@ -106,18 +102,18 @@ tb_bool_t tb_semaphore_post(tb_semaphore_ref_t semaphore, tb_size_t post)
     while (post--)
     {
         // +2 first
-        tb_atomic_fetch_and_add(&impl->value, 2);
+        tb_atomic32_fetch_and_add(&impl->value, 2);
 
         // signal
         if (KERN_SUCCESS != semaphore_signal(impl->semaphore)) 
         {
             // restore
-            tb_atomic_fetch_and_sub(&impl->value, 2);
+            tb_atomic32_fetch_and_sub(&impl->value, 2);
             return tb_false;
         }
 
         // -1
-        tb_atomic_fetch_and_dec(&impl->value);
+        tb_atomic32_fetch_and_sub(&impl->value, 1);
     }
 
     // ok
@@ -130,7 +126,7 @@ tb_long_t tb_semaphore_value(tb_semaphore_ref_t semaphore)
     tb_assert_and_check_return_val(semaphore, -1);
 
     // get value
-    return (tb_long_t)tb_atomic_get(&impl->value);
+    return (tb_long_t)tb_atomic32_get(&impl->value);
 }
 tb_long_t tb_semaphore_wait(tb_semaphore_ref_t semaphore, tb_long_t timeout)
 {
@@ -157,10 +153,10 @@ tb_long_t tb_semaphore_wait(tb_semaphore_ref_t semaphore, tb_long_t timeout)
     tb_check_return_val(ok == KERN_SUCCESS, -1);
 
     // check value
-    tb_assert_and_check_return_val((tb_long_t)tb_atomic_get(&impl->value) > 0, -1);
+    tb_assert_and_check_return_val((tb_long_t)tb_atomic32_get(&impl->value) > 0, -1);
     
     // value--
-    tb_atomic_fetch_and_dec(&impl->value);
+    tb_atomic32_fetch_and_sub(&impl->value, 1);
     
     // ok
     return 1;

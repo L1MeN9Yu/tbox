@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -28,14 +24,14 @@
  */
 #include "kernel32.h"
 #include "ws2_32.h"
+#include "../../atomic.h"
 
 /* //////////////////////////////////////////////////////////////////////////////////////
  * implementation
  */
-static tb_bool_t tb_kernel32_instance_init(tb_handle_t instance, tb_cpointer_t priv)
+static tb_bool_t tb_kernel32_instance_init(tb_kernel32_ref_t kernel32)
 {
     // check
-    tb_kernel32_ref_t kernel32 = (tb_kernel32_ref_t)instance;
     tb_assert_and_check_return_val(kernel32, tb_false);
 
     // the kernel32 module
@@ -47,11 +43,9 @@ static tb_bool_t tb_kernel32_instance_init(tb_handle_t instance, tb_cpointer_t p
     TB_INTERFACE_LOAD(kernel32, RtlCaptureStackBackTrace);
     TB_INTERFACE_LOAD(kernel32, GetFileSizeEx);
     TB_INTERFACE_LOAD(kernel32, GetQueuedCompletionStatusEx);
-    TB_INTERFACE_LOAD(kernel32, InterlockedCompareExchange64);
     TB_INTERFACE_LOAD(kernel32, GetEnvironmentVariableW);
     TB_INTERFACE_LOAD(kernel32, SetEnvironmentVariableW);
     TB_INTERFACE_LOAD(kernel32, CreateProcessW);
-    TB_INTERFACE_LOAD(kernel32, WaitForSingleObject);
     TB_INTERFACE_LOAD(kernel32, WaitForMultipleObjects);
     TB_INTERFACE_LOAD(kernel32, GetExitCodeProcess);
     TB_INTERFACE_LOAD(kernel32, TerminateProcess);
@@ -72,16 +66,12 @@ static tb_bool_t tb_kernel32_instance_init(tb_handle_t instance, tb_cpointer_t p
  */
 tb_kernel32_ref_t tb_kernel32()
 {
-    // init
-    static tb_atomic_t      s_binited = 0;
+    // we will pre-initialize it in tb_platform_init()
+    static tb_bool_t        s_binited = tb_false;
     static tb_kernel32_t    s_kernel32 = {0};
-
-    // init the static instance
-    tb_bool_t ok = tb_singleton_static_init(&s_binited, &s_kernel32, tb_kernel32_instance_init, tb_null);
-    tb_assert(ok); tb_used(ok);
-
-    // ok
-    return &s_kernel32;
+    if (!s_binited)
+        s_binited = tb_kernel32_instance_init(&s_kernel32);
+    return s_binited? &s_kernel32 : tb_null;
 }
 tb_bool_t tb_kernel32_has_SetFileCompletionNotificationModes()
 {

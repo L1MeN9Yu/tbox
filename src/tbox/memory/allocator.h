@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -77,6 +73,7 @@ typedef enum __tb_allocator_type_e
     TB_ALLOCATOR_TYPE_NONE       = 0
 ,   TB_ALLOCATOR_TYPE_DEFAULT    = 1
 ,   TB_ALLOCATOR_TYPE_NATIVE     = 2
+,   TB_ALLOCATOR_TYPE_VIRTUAL    = 3
 ,   TB_ALLOCATOR_TYPE_STATIC     = 4
 ,   TB_ALLOCATOR_TYPE_LARGE      = 5
 ,   TB_ALLOCATOR_TYPE_SMALL      = 6
@@ -200,7 +197,7 @@ typedef struct __tb_allocator_t
  *
  * @return              the allocator
  */
-tb_allocator_ref_t      tb_allocator();
+tb_allocator_ref_t      tb_allocator(tb_noarg_t);
 
 /*! the native allocator
  *

@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -214,7 +210,6 @@ tb_double_t         tb_database_sql_value_double(tb_database_sql_value_t const* 
 /*! set the null value
  *
  * @param value     the value
- * @param number    the number
  */
 tb_void_t           tb_database_sql_value_set_null(tb_database_sql_value_t* value);
 

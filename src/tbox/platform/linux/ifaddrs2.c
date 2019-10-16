@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -565,7 +561,7 @@ static tb_bool_t tb_ifaddrs_interface_load(tb_list_ref_t interfaces, tb_long_t s
 
     // done
     tb_long_t ok = -1;
-    while (!(ok = tb_ifaddrs_interface_done(interfaces, names, sock, request))) ;
+    while (!(ok = tb_ifaddrs_interface_done(interfaces, names, sock, request))) {};
 
     // trace
     tb_trace_d("netlink: load: %s", ok > 0? "ok" : "no");

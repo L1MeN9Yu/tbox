@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -59,16 +55,16 @@ typedef enum __tb_url_protocol_t
 typedef struct __tb_url_t
 {
     // the protocol 
-    tb_uint16_t         poto:   6;
+    tb_uint16_t         protocol: 6;
 
     // is ssl?
-    tb_uint16_t         bssl:   1;
+    tb_uint16_t         is_ssl:   1;
 
     // is win?
-    tb_uint16_t         bwin:   1;
+    tb_uint16_t         is_win:   1;
 
     // the windows prefix 
-    tb_uint16_t         pwin:   8;
+    tb_uint16_t         pwin:     8;
 
     // the addr
     tb_ipaddr_t         addr;
@@ -155,9 +151,9 @@ tb_bool_t           tb_url_ssl(tb_url_ref_t url);
 /*! set ssl
  *
  * @param url       the url
- * @param bssl      is ssl?
+ * @param is_ssl    is ssl?
  */
-tb_void_t           tb_url_ssl_set(tb_url_ref_t url, tb_bool_t bssl);
+tb_void_t           tb_url_ssl_set(tb_url_ref_t url, tb_bool_t is_ssl);
 
 /*! get the protocol from the url
  *
@@ -170,7 +166,7 @@ tb_size_t           tb_url_protocol(tb_url_ref_t url);
 /*! set the protocol to the url
  *
  * @param url       the url
- * @param poto      the url protocol
+ * @param protocol  the url protocol
  */
 tb_void_t           tb_url_protocol_set(tb_url_ref_t url, tb_size_t protocol);
 

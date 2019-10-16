@@ -2,7 +2,7 @@
  * includes
  */
 #include "demo.h"
-
+ 
 /* //////////////////////////////////////////////////////////////////////////////////////
  * macros
  */
@@ -156,18 +156,22 @@ static tb_demo_t g_demo[] =
 ,   TB_DEMO_MAIN_ITEM(platform_file)
 ,   TB_DEMO_MAIN_ITEM(platform_path)
 ,   TB_DEMO_MAIN_ITEM(platform_utils)
+,   TB_DEMO_MAIN_ITEM(platform_sched)
 ,   TB_DEMO_MAIN_ITEM(platform_atomic)
-,   TB_DEMO_MAIN_ITEM(platform_process)
-,   TB_DEMO_MAIN_ITEM(platform_barrier)
+,   TB_DEMO_MAIN_ITEM(platform_atomic32)
 ,   TB_DEMO_MAIN_ITEM(platform_atomic64)
+,   TB_DEMO_MAIN_ITEM(platform_stdfile)
+,   TB_DEMO_MAIN_ITEM(platform_process)
 ,   TB_DEMO_MAIN_ITEM(platform_ifaddrs)
+,   TB_DEMO_MAIN_ITEM(platform_filelock)
 ,   TB_DEMO_MAIN_ITEM(platform_addrinfo)
 ,   TB_DEMO_MAIN_ITEM(platform_hostname)
-,   TB_DEMO_MAIN_ITEM(platform_processor)
 ,   TB_DEMO_MAIN_ITEM(platform_backtrace)
 ,   TB_DEMO_MAIN_ITEM(platform_directory)
 ,   TB_DEMO_MAIN_ITEM(platform_cache_time)
 ,   TB_DEMO_MAIN_ITEM(platform_environment)
+,   TB_DEMO_MAIN_ITEM(platform_pipe_pair)
+,   TB_DEMO_MAIN_ITEM(platform_named_pipe)
 ,   TB_DEMO_MAIN_ITEM(platform_lock)
 ,   TB_DEMO_MAIN_ITEM(platform_timer)
 ,   TB_DEMO_MAIN_ITEM(platform_ltimer)
@@ -176,6 +180,8 @@ static tb_demo_t g_demo[] =
 ,   TB_DEMO_MAIN_ITEM(platform_thread)
 ,   TB_DEMO_MAIN_ITEM(platform_thread_pool)
 ,   TB_DEMO_MAIN_ITEM(platform_thread_local)
+,   TB_DEMO_MAIN_ITEM(platform_poller_client)
+,   TB_DEMO_MAIN_ITEM(platform_poller_server)
 #ifdef TB_CONFIG_MODULE_HAVE_COROUTINE
 ,   TB_DEMO_MAIN_ITEM(platform_context)
 #endif
@@ -241,6 +247,8 @@ tb_int_t main(tb_int_t argc, tb_char_t** argv)
     // init tbox
 #if 0
     if (!tb_init(tb_null, tb_default_allocator((tb_byte_t*)malloc(300 * 1024 * 1024), 300 * 1024 * 1024))) return -1;
+#elif 0
+    if (!tb_init(tb_null, tb_virtual_allocator())) return -1;
 #elif 0
     if (!tb_init(tb_null, tb_static_allocator((tb_byte_t*)malloc(300 * 1024 * 1024), 300 * 1024 * 1024))) return -1;
 #elif (defined(__tb_valgrind__) && defined(TB_CONFIG_VALGRIND_HAVE_VALGRIND_STACK_REGISTER)) \

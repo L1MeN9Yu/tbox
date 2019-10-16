@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -214,14 +210,14 @@ tb_void_t           tb_list_moveto_next(tb_list_ref_t list, tb_size_t itor, tb_s
 /*! moveto the head item
  *
  * @param list      the list
- * @param itor      the item itor
+ * @param move      the move itor
  */
 tb_void_t           tb_list_moveto_head(tb_list_ref_t list, tb_size_t move);
 
 /*! moveto the tail item
  *
  * @param list      the list
- * @param itor      the item itor
+ * @param move      the move itor
  */
 tb_void_t           tb_list_moveto_tail(tb_list_ref_t list, tb_size_t move);
 

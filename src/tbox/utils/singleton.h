@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -89,8 +85,17 @@ typedef enum __tb_singleton_type_e
     /// the cookies type
 ,   TB_SINGLETON_TYPE_COOKIES               = 12
 
+    /// the stdfile(stdin) type
+,   TB_SINGLETON_TYPE_STDFILE_STDIN         = 13
+
+    /// the stdfile(stdout) type
+,   TB_SINGLETON_TYPE_STDFILE_STDOUT        = 14
+
+    /// the stdfile(stderr) type
+,   TB_SINGLETON_TYPE_STDFILE_STDERR        = 15
+
     /// the user defined type
-,   TB_SINGLETON_TYPE_USER                  = 13
+,   TB_SINGLETON_TYPE_USER                  = 16
 
 #endif
 
@@ -161,7 +166,7 @@ tb_handle_t         tb_singleton_instance(tb_size_t type, tb_singleton_init_func
     tb_xxxx_t* tb_xxxx()
     {
         // init
-        static tb_atomic_t      s_binited = 0;
+        static tb_atomic32_t    s_binited = 0;
         static tb_xxxx_t        s_xxxx = {0};
 
         // init the static instance
@@ -180,7 +185,7 @@ tb_handle_t         tb_singleton_instance(tb_size_t type, tb_singleton_init_func
  *
  * @return          tb_true or tb_false
  */
-tb_bool_t           tb_singleton_static_init(tb_atomic_t* binited, tb_handle_t instance, tb_singleton_static_init_func_t init, tb_cpointer_t priv);
+tb_bool_t           tb_singleton_static_init(tb_atomic32_t* binited, tb_handle_t instance, tb_singleton_static_init_func_t init, tb_cpointer_t priv);
 
 /* //////////////////////////////////////////////////////////////////////////////////////
  * extern

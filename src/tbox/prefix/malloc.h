@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -99,7 +95,7 @@ __tb_extern_c_enter__
  */
 
 struct __tb_allocator_t;
-struct __tb_allocator_t*    tb_allocator();
+struct __tb_allocator_t*    tb_allocator(tb_noarg_t);
 tb_pointer_t                tb_allocator_malloc_(struct __tb_allocator_t* allocator, tb_size_t size __tb_debug_decl__);
 tb_pointer_t                tb_allocator_malloc0_(struct __tb_allocator_t* allocator, tb_size_t size __tb_debug_decl__);
 tb_pointer_t                tb_allocator_nalloc_(struct __tb_allocator_t* allocator, tb_size_t item, tb_size_t size __tb_debug_decl__);

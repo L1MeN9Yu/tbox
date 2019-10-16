@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -27,6 +23,7 @@
  */
 #include "prefix.h"
 #include "../socket.h"
+#include "../file.h"
 #include "interface/interface.h"
 #include "iocp_object.h"
 #include "socket_pool.h"
@@ -332,12 +329,8 @@ tb_bool_t tb_socket_ctrl(tb_socket_ref_t sock, tb_size_t ctrl, ...)
         break;
     case TB_SOCKET_CTRL_SET_RECV_BUFF_SIZE:
         {
-            // the buff_size
-            tb_size_t buff_size = (tb_size_t)tb_va_arg(args, tb_size_t);
-
-            // set the recv buffer size
-            tb_int_t real = (tb_int_t)buff_size;
-            if (!tb_ws2_32()->setsockopt(fd, SOL_SOCKET, SO_RCVBUF, (tb_char_t*)&real, sizeof(real)))
+            tb_int_t buff_size = (tb_int_t)tb_va_arg(args, tb_size_t);
+            if (!tb_ws2_32()->setsockopt(fd, SOL_SOCKET, SO_RCVBUF, (tb_char_t*)&buff_size, sizeof(buff_size)))
                 ok = tb_true;
         }
         break;
@@ -363,12 +356,8 @@ tb_bool_t tb_socket_ctrl(tb_socket_ref_t sock, tb_size_t ctrl, ...)
         break;
     case TB_SOCKET_CTRL_SET_SEND_BUFF_SIZE:
         {
-            // the buff_size
-            tb_size_t buff_size = (tb_size_t)tb_va_arg(args, tb_size_t);
-
-            // set the send buffer size
-            tb_int_t real = (tb_int_t)buff_size;
-            if (!tb_ws2_32()->setsockopt(fd, SOL_SOCKET, SO_SNDBUF, (tb_char_t*)&real, sizeof(real)))
+            tb_int_t buff_size = (tb_int_t)tb_va_arg(args, tb_size_t);
+            if (!tb_ws2_32()->setsockopt(fd, SOL_SOCKET, SO_SNDBUF, (tb_char_t*)&buff_size, sizeof(buff_size)))
                 ok = tb_true;
         }
         break;
@@ -392,6 +381,27 @@ tb_bool_t tb_socket_ctrl(tb_socket_ref_t sock, tb_size_t ctrl, ...)
             else *pbuff_size = 0;
         }
         break;
+    case TB_SOCKET_CTRL_SET_NOSIGPIPE:
+        ok = tb_true;
+        break;
+#ifdef SO_KEEPALIVE
+    case TB_SOCKET_CTRL_SET_KEEPALIVE:
+        {
+            tb_int_t enable = (tb_int_t)tb_va_arg(args, tb_bool_t);
+            if (!tb_ws2_32()->setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (tb_char_t*)&enable, sizeof(enable)))
+                ok = tb_true;
+        }
+        break;
+#endif
+#ifdef TCP_KEEPINTVL
+    case TB_SOCKET_CTRL_SET_TCP_KEEPINTVL:
+        {
+            tb_int_t intvl = (tb_int_t)tb_va_arg(args, tb_size_t);
+            if (!tb_ws2_32()->setsockopt(fd, IPPROTO_TCP, TCP_KEEPINTVL, (tb_char_t*)&intvl, sizeof(intvl)))
+                ok = tb_true;
+        }
+        break;
+#endif
     default:
         {
             // trace
@@ -412,7 +422,7 @@ tb_long_t tb_socket_connect(tb_socket_ref_t sock, tb_ipaddr_ref_t addr)
     tb_assert_and_check_return_val(sock && addr, -1);
     tb_assert_and_check_return_val(!tb_ipaddr_is_empty(addr), -1);
 
-#if defined(TB_CONFIG_MODULE_HAVE_COROUTINE) && !defined(TB_CONFIG_MICRO_ENABLE)
+#ifndef TB_CONFIG_MICRO_ENABLE
     // attempt to use iocp object to connect if exists
     tb_iocp_object_ref_t object = tb_iocp_object_get_or_new(sock);
     if (object) return tb_iocp_object_connect(object, addr);
@@ -493,7 +503,7 @@ tb_socket_ref_t tb_socket_accept(tb_socket_ref_t sock, tb_ipaddr_ref_t addr)
     // check
     tb_assert_and_check_return_val(sock, tb_null);
 
-#if defined(TB_CONFIG_MODULE_HAVE_COROUTINE) && !defined(TB_CONFIG_MICRO_ENABLE)
+#ifndef TB_CONFIG_MICRO_ENABLE
     // attempt to use iocp object to accept if exists
     tb_iocp_object_ref_t object = tb_iocp_object_get_or_new(sock);
     if (object) return tb_iocp_object_accept(object, addr);
@@ -621,7 +631,7 @@ tb_bool_t tb_socket_exit(tb_socket_ref_t sock)
     if ((scheduler_io = tb_lo_scheduler_io_self()) && tb_lo_scheduler_io_cancel((tb_lo_scheduler_io_ref_t)scheduler_io, sock)) {}
 #endif
 
-#if defined(TB_CONFIG_MODULE_HAVE_COROUTINE) && !defined(TB_CONFIG_MICRO_ENABLE)
+#ifndef TB_CONFIG_MICRO_ENABLE
     // remove iocp object for this socket if exists
     tb_iocp_object_remove(sock);
 #endif
@@ -643,7 +653,7 @@ tb_long_t tb_socket_recv(tb_socket_ref_t sock, tb_byte_t* data, tb_size_t size)
     tb_assert_and_check_return_val(sock && data, -1);
     tb_check_return_val(size, 0);
 
-#if defined(TB_CONFIG_MODULE_HAVE_COROUTINE) && !defined(TB_CONFIG_MICRO_ENABLE)
+#ifndef TB_CONFIG_MICRO_ENABLE
     // attempt to use iocp object to recv data if exists
     tb_iocp_object_ref_t object = tb_iocp_object_get_or_new(sock);
     if (object) return tb_iocp_object_recv(object, data, size);
@@ -670,7 +680,7 @@ tb_long_t tb_socket_send(tb_socket_ref_t sock, tb_byte_t const* data, tb_size_t 
     tb_assert_and_check_return_val(sock && data, -1);
     tb_check_return_val(size, 0);
 
-#if defined(TB_CONFIG_MODULE_HAVE_COROUTINE) && !defined(TB_CONFIG_MICRO_ENABLE)
+#ifndef TB_CONFIG_MICRO_ENABLE
     // attempt to use iocp object to send data if exists
     tb_iocp_object_ref_t object = tb_iocp_object_get_or_new(sock);
     if (object) return tb_iocp_object_send(object, data, size);
@@ -696,7 +706,7 @@ tb_hong_t tb_socket_sendf(tb_socket_ref_t sock, tb_file_ref_t file, tb_hize_t of
     // check
     tb_assert_and_check_return_val(sock && file && size, -1);
 
-#if defined(TB_CONFIG_MODULE_HAVE_COROUTINE) && !defined(TB_CONFIG_MICRO_ENABLE)
+#ifndef TB_CONFIG_MICRO_ENABLE
     // attempt to use iocp object to send file data if exists
     tb_iocp_object_ref_t object = tb_iocp_object_get_or_new(sock);
     if (object) return tb_iocp_object_sendf(object, file, offset, size);
@@ -708,16 +718,7 @@ tb_hong_t tb_socket_sendf(tb_socket_ref_t sock, tb_file_ref_t file, tb_hize_t of
     tb_check_return_val(read > 0, read);
 
     // send data
-    tb_size_t writ = 0;
-    while (writ < read)
-    {
-        tb_long_t real = tb_socket_send(sock, data + writ, read - writ);
-        if (real > 0) writ += real;
-        else break;
-    }
-
-    // ok?
-    return writ == read? writ : -1;
+    return tb_socket_send(sock, data, read);
 }
 tb_long_t tb_socket_urecv(tb_socket_ref_t sock, tb_ipaddr_ref_t addr, tb_byte_t* data, tb_size_t size)
 {
@@ -727,7 +728,7 @@ tb_long_t tb_socket_urecv(tb_socket_ref_t sock, tb_ipaddr_ref_t addr, tb_byte_t*
     // no size?
     tb_check_return_val(size, 0);
 
-#if defined(TB_CONFIG_MODULE_HAVE_COROUTINE) && !defined(TB_CONFIG_MICRO_ENABLE)
+#ifndef TB_CONFIG_MICRO_ENABLE
     // attempt to use iocp object to urecv data if exists
     tb_iocp_object_ref_t object = tb_iocp_object_get_or_new(sock);
     if (object) return tb_iocp_object_urecv(object, addr, data, size);
@@ -741,10 +742,7 @@ tb_long_t tb_socket_urecv(tb_socket_ref_t sock, tb_ipaddr_ref_t addr, tb_byte_t*
     // ok?
     if (r >= 0) 
     {
-        // save address
         if (addr) tb_sockaddr_save(addr, &d);
-        
-        // ok
         return r;
     }
 
@@ -763,7 +761,7 @@ tb_long_t tb_socket_usend(tb_socket_ref_t sock, tb_ipaddr_ref_t addr, tb_byte_t 
     // no size?
     tb_check_return_val(size, 0);
 
-#if defined(TB_CONFIG_MODULE_HAVE_COROUTINE) && !defined(TB_CONFIG_MICRO_ENABLE)
+#ifndef TB_CONFIG_MICRO_ENABLE
     // attempt to use iocp object to usend data if exists
     tb_iocp_object_ref_t object = tb_iocp_object_get_or_new(sock);
     if (object) return tb_iocp_object_usend(object, addr, data, size);
@@ -792,11 +790,9 @@ tb_long_t tb_socket_recvv(tb_socket_ref_t sock, tb_iovec_t const* list, tb_size_
     // check
     tb_assert_and_check_return_val(sock && list && size, -1);
 
-#ifdef TB_CONFIG_MODULE_HAVE_COROUTINE
     // attempt to use iocp object to recv data if exists
     tb_iocp_object_ref_t object = tb_iocp_object_get_or_new(sock);
     if (object) return tb_iocp_object_recvv(object, list, size);
-#endif
 
     // walk read
     tb_size_t i = 0;
@@ -836,11 +832,9 @@ tb_long_t tb_socket_sendv(tb_socket_ref_t sock, tb_iovec_t const* list, tb_size_
     // check
     tb_assert_and_check_return_val(sock && list && size, -1);
 
-#ifdef TB_CONFIG_MODULE_HAVE_COROUTINE
     // attempt to use iocp object to send data if exists
     tb_iocp_object_ref_t object = tb_iocp_object_get_or_new(sock);
     if (object) return tb_iocp_object_sendv(object, list, size);
-#endif
 
     // walk writ
     tb_size_t i = 0;
@@ -880,11 +874,9 @@ tb_long_t tb_socket_urecvv(tb_socket_ref_t sock, tb_ipaddr_ref_t addr, tb_iovec_
     // check
     tb_assert_and_check_return_val(sock && list && size, -1);
 
-#ifdef TB_CONFIG_MODULE_HAVE_COROUTINE
     // attempt to use iocp object to recv data if exists
     tb_iocp_object_ref_t object = tb_iocp_object_get_or_new(sock);
     if (object) return tb_iocp_object_urecvv(object, addr, list, size);
-#endif
 
     // done
     tb_size_t               i = 0;
@@ -930,11 +922,9 @@ tb_long_t tb_socket_usendv(tb_socket_ref_t sock, tb_ipaddr_ref_t addr, tb_iovec_
     tb_assert_and_check_return_val(sock && addr && list && size, -1);
     tb_assert_and_check_return_val(!tb_ipaddr_is_empty(addr), -1);
 
-#ifdef TB_CONFIG_MODULE_HAVE_COROUTINE
     // attempt to use iocp object to send data if exists
     tb_iocp_object_ref_t object = tb_iocp_object_get_or_new(sock);
     if (object) return tb_iocp_object_usendv(object, addr, list, size);
-#endif
 
     // load addr
     tb_size_t               n = 0;

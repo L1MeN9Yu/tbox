@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -47,49 +43,56 @@ __tb_extern_c_enter__
 #endif
 
 /* //////////////////////////////////////////////////////////////////////////////////////
+ * types
+ */
+
+/// the lock profiler ref type
+typedef __tb_typeref__(lock_profiler);
+
+/* //////////////////////////////////////////////////////////////////////////////////////
  * interfaces
  */
 
 /*! the lock profiler instance
  *
- * @return              the lock profiler handle
+ * @return              the lock profiler 
  */
-tb_handle_t             tb_lock_profiler(tb_noarg_t);
+tb_lock_profiler_ref_t  tb_lock_profiler(tb_noarg_t);
 
 /*! init lock profiler
  *
  * @note be used for the debug mode generally 
  *
- * @return              the lock profiler handle
+ * @return              the lock profiler 
  */
-tb_handle_t             tb_lock_profiler_init(tb_noarg_t);
+tb_lock_profiler_ref_t  tb_lock_profiler_init(tb_noarg_t);
 
 /*! exit lock profiler
  *
- * @param profiler      the lock profiler handle
+ * @param profiler      the lock profiler 
  */
-tb_void_t               tb_lock_profiler_exit(tb_handle_t profiler);
+tb_void_t               tb_lock_profiler_exit(tb_lock_profiler_ref_t profiler);
 
 /*! dump lock profiler
  *
- * @param profiler      the lock profiler handle
+ * @param profiler      the lock profiler 
  */
-tb_void_t               tb_lock_profiler_dump(tb_handle_t profiler);
+tb_void_t               tb_lock_profiler_dump(tb_lock_profiler_ref_t profiler);
 
 /*! register the lock to the lock profiler
  *
- * @param profiler      the lock profiler handle
+ * @param profiler      the lock profiler 
  * @param lock          the lock address
  * @param name          the lock name
  */
-tb_void_t               tb_lock_profiler_register(tb_handle_t profiler, tb_pointer_t lock, tb_char_t const* name);
+tb_void_t               tb_lock_profiler_register(tb_lock_profiler_ref_t profiler, tb_pointer_t lock, tb_char_t const* name);
 
 /*! the lock be occupied 
  *
- * @param profiler      the lock profiler handle
+ * @param profiler      the lock profiler 
  * @param lock          the lock address
  */
-tb_void_t               tb_lock_profiler_occupied(tb_handle_t profiler, tb_pointer_t lock);
+tb_void_t               tb_lock_profiler_occupied(tb_lock_profiler_ref_t profiler, tb_pointer_t lock);
 
 /* //////////////////////////////////////////////////////////////////////////////////////
  * extern

@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -34,59 +30,154 @@
  * macros
  */
 
-#if !defined(tb_atomic_fetch_and_set) && !TB_CPU_BIT64
-#   define tb_atomic_fetch_and_set(a, v)        tb_atomic_fetch_and_set_windows(a, v)
+// no barriers or synchronization. 
+#define TB_ATOMIC_RELAXED        (1)
+
+// data dependency only for both barrier and synchronization with another thread. 
+#define TB_ATOMIC_CONSUME        (2)
+
+// barrier to hoisting of code and synchronizes with release (or stronger) semantic stores from another thread. 
+#define TB_ATOMIC_ACQUIRE        (3)
+
+// barrier to sinking of code and synchronizes with acquire (or stronger) semantic loads from another thread. 
+#define TB_ATOMIC_RELEASE        (4)
+
+// full barrier in both directions and synchronizes with acquire loads and release stores in another thread. 
+#define TB_ATOMIC_ACQ_REL        (5)
+
+/// full barrier in both directions and synchronizes with acquire loads and release stores in all threads.
+#define TB_ATOMIC_SEQ_CST        (6)
+
+// memory barrier
+#if defined(MemoryBarrier)
+#   define tb_memory_barrier()                          MemoryBarrier()
+#elif defined(_AMD64_)
+#   define tb_memory_barrier()                          __faststorefence()
+#elif defined(_IA64_)
+#   define tb_memory_barrier()                          __mf()
 #endif
 
-#if !defined(tb_atomic_fetch_and_pset)
-#   define tb_atomic_fetch_and_pset(a, p, v)    tb_atomic_fetch_and_pset_windows(a, p, v)
-#endif
-
-#if !defined(tb_atomic_fetch_and_add) && !TB_CPU_BIT64
-#   define tb_atomic_fetch_and_add(a, v)        tb_atomic_fetch_and_add_windows(a, v)
-#endif
-
-#if !defined(tb_atomic_inc_and_fetch) && !TB_CPU_BIT64
-#   define tb_atomic_inc_and_fetch(a)           tb_atomic_inc_and_fetch_windows(a)
-#endif
-
-#if !defined(tb_atomic_dec_and_fetch) && !TB_CPU_BIT64
-#   define tb_atomic_dec_and_fetch(a)           tb_atomic_dec_and_fetch_windows(a)
+#if defined(TB_CONFIG_WINDOWS_HAVE__INTERLOCKEDEXCHANGE8) && defined(TB_CONFIG_WINDOWS_HAVE__INTERLOCKEDOR8)
+#   define tb_atomic_flag_test_and_set_explicit(a, mo)  tb_atomic_flag_test_and_set_explicit_windows(a, mo)
+#   define tb_atomic_flag_test_and_set(a)               tb_atomic_flag_test_and_set_explicit(a, TB_ATOMIC_SEQ_CST)
+#   define tb_atomic_flag_test_explicit(a, mo)          tb_atomic_flag_test_explicit_windows(a, mo)
+#   define tb_atomic_flag_test(a)                       tb_atomic_flag_test_explicit(a, TB_ATOMIC_SEQ_CST)
+#   define tb_atomic_flag_clear_explicit(a, mo)         tb_atomic_flag_clear_explicit_windows(a, mo)
+#   define tb_atomic_flag_clear(a)                      tb_atomic_flag_clear_explicit(a, TB_ATOMIC_SEQ_CST)
 #endif
 
 /* //////////////////////////////////////////////////////////////////////////////////////
- * inlines
+ * extern
  */
-#if TB_CPU_BIT64
-static __tb_inline__ tb_long_t tb_atomic_fetch_and_pset_windows(tb_atomic_t* a, tb_long_t p, tb_long_t v)
-{
-    // check
-    tb_assert_static(sizeof(tb_atomic_t) == sizeof(LONGLONG));
+__tb_extern_c_enter__
 
-    // done
-    return (tb_long_t)InterlockedCompareExchange64((LONGLONG __tb_volatile__*)a, v, p);
-}
-#else
-static __tb_inline__ tb_long_t tb_atomic_fetch_and_set_windows(tb_atomic_t* a, tb_long_t v)
+/* //////////////////////////////////////////////////////////////////////////////////////
+ * declarations
+ */
+
+// _InterlockedExchange8XX
+#ifdef TB_CONFIG_WINDOWS_HAVE__INTERLOCKEDEXCHANGE8
+CHAR _InterlockedExchange8(CHAR __tb_volatile__* Destination, CHAR Exchange);
+#    pragma intrinsic(_InterlockedExchange8)
+#endif
+#ifdef TB_CONFIG_WINDOWS_HAVE__INTERLOCKEDEXCHANGE8_NF
+CHAR _InterlockedExchange8_nf(CHAR __tb_volatile__* Destination, CHAR Exchange);
+#    pragma intrinsic(_InterlockedExchange8_nf)
+#endif
+#ifdef TB_CONFIG_WINDOWS_HAVE__INTERLOCKEDEXCHANGE8_ACQ
+CHAR _InterlockedExchange8_acq(CHAR __tb_volatile__* Destination, CHAR Exchange);
+#    pragma intrinsic(_InterlockedExchange8_acq)
+#endif
+#ifdef TB_CONFIG_WINDOWS_HAVE__INTERLOCKEDEXCHANGE8_REL
+CHAR _InterlockedExchange8_rel(CHAR __tb_volatile__* Destination, CHAR Exchange);
+#    pragma intrinsic(_InterlockedExchange8_rel)
+#endif
+
+// _InterlockedOr8XX
+#ifdef TB_CONFIG_WINDOWS_HAVE__INTERLOCKEDOR8
+CHAR _InterlockedOr8(CHAR __tb_volatile__* Destination, CHAR Value);
+#    pragma intrinsic(_InterlockedOr8)
+#endif
+#ifdef TB_CONFIG_WINDOWS_HAVE__INTERLOCKEDOR8_NF
+CHAR _InterlockedOr8_nf(CHAR __tb_volatile__* Destination, CHAR Value);
+#    pragma intrinsic(_InterlockedOr8_nf)
+#endif
+#ifdef TB_CONFIG_WINDOWS_HAVE__INTERLOCKEDOR8_ACQ
+CHAR _InterlockedOr8_acq(CHAR __tb_volatile__* Destination, CHAR Value);
+#    pragma intrinsic(_InterlockedOr8_acq)
+#endif
+#ifdef TB_CONFIG_WINDOWS_HAVE__INTERLOCKEDOR8_REL
+CHAR _InterlockedOr8_rel(CHAR __tb_volatile__* Destination, CHAR Value);
+#    pragma intrinsic(_InterlockedOr8_rel)
+#endif
+
+/* //////////////////////////////////////////////////////////////////////////////////////
+ * extern
+ */
+__tb_extern_c_leave__
+
+/* //////////////////////////////////////////////////////////////////////////////////////
+ * inline implementation
+ */
+#if defined(TB_CONFIG_WINDOWS_HAVE__INTERLOCKEDEXCHANGE8) && defined(TB_CONFIG_WINDOWS_HAVE__INTERLOCKEDOR8)
+static __tb_inline__ tb_bool_t tb_atomic_flag_test_and_set_explicit_windows(tb_atomic_flag_t* a, tb_int_t mo)
 {
-    return (tb_long_t)InterlockedExchange((LONG __tb_volatile__*)a, v);
+    tb_assert(a);
+    tb_assert_static(sizeof(tb_atomic_flag_t) == sizeof(tb_char_t));
+#if defined(TB_CONFIG_WINDOWS_HAVE__INTERLOCKEDEXCHANGE8_NF)
+    if (mo == TB_ATOMIC_RELAXED) return (tb_bool_t)_InterlockedExchange8_nf((CHAR __tb_volatile__*)a, 1);
+#endif
+#if defined(TB_CONFIG_WINDOWS_HAVE__INTERLOCKEDEXCHANGE8_ACQ)
+    if (mo == TB_ATOMIC_ACQUIRE) return (tb_bool_t)_InterlockedExchange8_acq((CHAR __tb_volatile__*)a, 1);
+#endif
+#if defined(TB_CONFIG_WINDOWS_HAVE__INTERLOCKEDEXCHANGE8_REL)
+    if (mo == TB_ATOMIC_RELEASE) return (tb_bool_t)_InterlockedExchange8_rel((CHAR __tb_volatile__*)a, 1);
+#endif
+    return (tb_bool_t)_InterlockedExchange8((CHAR __tb_volatile__*)a, 1);
 }
-static __tb_inline__ tb_long_t tb_atomic_fetch_and_pset_windows(tb_atomic_t* a, tb_long_t p, tb_long_t v)
+static __tb_inline__ tb_void_t tb_atomic_flag_clear_explicit_windows(tb_atomic_flag_t* a, tb_int_t mo)
 {
-    return (tb_long_t)InterlockedCompareExchange((LONG __tb_volatile__*)a, v, p);
+    tb_assert(a);
+    tb_assert_static(sizeof(tb_atomic_flag_t) == sizeof(tb_char_t));
+#if defined(TB_CONFIG_WINDOWS_HAVE__INTERLOCKEDEXCHANGE8_NF)
+    if (mo == TB_ATOMIC_RELAXED)
+    {
+        _InterlockedExchange8_nf((CHAR __tb_volatile__*)a, 0);
+        return ;
+    }
+#endif
+#if defined(TB_CONFIG_WINDOWS_HAVE__INTERLOCKEDEXCHANGE8_ACQ)
+    if (mo == TB_ATOMIC_ACQUIRE)
+    {
+        _InterlockedExchange8_acq((CHAR __tb_volatile__*)a, 0);
+        return ;
+    }
+#endif
+#if defined(TB_CONFIG_WINDOWS_HAVE__INTERLOCKEDEXCHANGE8_REL)
+    if (mo == TB_ATOMIC_RELEASE)
+    {
+        _InterlockedExchange8_rel((CHAR __tb_volatile__*)a, 0);
+        return ;
+    }
+#endif
+    _InterlockedExchange8((CHAR __tb_volatile__*)a, 0);
 }
-static __tb_inline__ tb_long_t tb_atomic_fetch_and_add_windows(tb_atomic_t* a, tb_long_t v)
+static __tb_inline__ tb_bool_t tb_atomic_flag_test_explicit_windows(tb_atomic_flag_t* a, tb_int_t mo)
 {
-    return (tb_long_t)InterlockedExchangeAdd((LONG __tb_volatile__*)a, v);
-}
-static __tb_inline__ tb_long_t tb_atomic_inc_and_fetch_windows(tb_atomic_t* a)
-{
-    return (tb_long_t)InterlockedIncrement((LONG __tb_volatile__*)a);
-}
-static __tb_inline__ tb_long_t tb_atomic_dec_and_fetch_windows(tb_atomic_t* a)
-{
-    return (tb_long_t)InterlockedDecrement((LONG __tb_volatile__*)a);
+    tb_assert(a);
+    tb_assert_static(sizeof(tb_atomic_flag_t) == sizeof(tb_char_t));
+#if defined(TB_CONFIG_WINDOWS_HAVE__INTERLOCKEDOR8_NF)
+    if (mo == TB_ATOMIC_RELAXED) return (tb_bool_t)_InterlockedOr8_nf((CHAR __tb_volatile__*)a, 0);
+#endif
+#if defined(TB_CONFIG_WINDOWS_HAVE__INTERLOCKEDOR8_ACQ)
+    if (mo == TB_ATOMIC_ACQUIRE) return (tb_bool_t)_InterlockedOr8_acq((CHAR __tb_volatile__*)a, 0);
+#endif
+#if defined(TB_CONFIG_WINDOWS_HAVE__INTERLOCKEDOR8_REL)
+    if (mo == TB_ATOMIC_RELEASE) return (tb_bool_t)_InterlockedOr8_rel((CHAR __tb_volatile__*)a, 0);
+#endif
+    return (tb_bool_t)_InterlockedOr8((CHAR __tb_volatile__*)a, 0);
 }
 #endif
+
 
 #endif

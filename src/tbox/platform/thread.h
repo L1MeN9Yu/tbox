@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -30,6 +26,7 @@
  * includes
  */
 #include "prefix.h"
+#include "sched.h"
 
 /* //////////////////////////////////////////////////////////////////////////////////////
  * extern
@@ -158,7 +155,7 @@ tb_void_t               tb_thread_return(tb_int_t value);
     }
  
     // run the once function
-    static tb_atomic_t once = 0;
+    static tb_atomic32_t once = 0;
     if (tb_thread_once(&once, tb_thread_once_func, "hello"))
     {
         // ok
@@ -173,7 +170,25 @@ tb_void_t               tb_thread_return(tb_int_t value);
  *
  * @return              tb_true or tb_false
  */
-tb_bool_t               tb_thread_once(tb_atomic_t* lock, tb_bool_t (*func)(tb_cpointer_t), tb_cpointer_t priv);
+tb_bool_t               tb_thread_once(tb_atomic32_t* lock, tb_bool_t (*func)(tb_cpointer_t), tb_cpointer_t priv);
+
+/*! set cpu affinity for the given thread
+ *
+ * @param thread        the thread, set the current thread if be null 
+ * @param cpuset        the cpu set 
+ *
+ * @return              tb_true or tb_false
+ */
+tb_bool_t               tb_thread_setaffinity(tb_thread_ref_t thread, tb_cpuset_ref_t cpuset);
+
+/*! get cpu affinity from the given thread
+ *
+ * @param thread        the thread, set the current thread if be null 
+ * @param cpuset        the cpu set 
+ *
+ * @return              tb_true or tb_false
+ */
+tb_bool_t               tb_thread_getaffinity(tb_thread_ref_t thread, tb_cpuset_ref_t cpuset);
 
 /* //////////////////////////////////////////////////////////////////////////////////////
  * extern

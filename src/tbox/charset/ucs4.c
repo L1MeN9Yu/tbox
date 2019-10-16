@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -36,7 +32,7 @@
 tb_long_t tb_charset_ucs4_get(tb_static_stream_ref_t sstream, tb_bool_t be, tb_uint32_t* ch);
 tb_long_t tb_charset_ucs4_get(tb_static_stream_ref_t sstream, tb_bool_t be, tb_uint32_t* ch)
 {
-    *ch = be? tb_static_stream_read_u32_be(sstream) : tb_static_stream_read_u32_le(sstream);
+    *ch = be ? tb_static_stream_read_u32_be(sstream) : tb_static_stream_read_u32_le(sstream);
     return 1;
 }
 

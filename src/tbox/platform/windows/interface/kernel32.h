@@ -1,12 +1,8 @@
 /*!The Treasure Box Library
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -68,9 +64,6 @@ typedef USHORT (WINAPI* tb_kernel32_RtlCaptureStackBackTrace_t)(ULONG FramesToSk
 // the GetFileSizeEx func type
 typedef BOOL (WINAPI* tb_kernel32_GetFileSizeEx_t)(HANDLE hFile, PLARGE_INTEGER lpFileSize);
 
-// the InterlockedCompareExchange64 func type
-typedef LONGLONG (WINAPI* tb_kernel32_InterlockedCompareExchange64_t)(LONGLONG __tb_volatile__* Destination, LONGLONG Exchange, LONGLONG Comparand);
-
 // the GetEnvironmentVariableW func type
 typedef DWORD (WINAPI* tb_kernel32_GetEnvironmentVariableW_t)(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize);
 
@@ -79,9 +72,6 @@ typedef BOOL (WINAPI* tb_kernel32_SetEnvironmentVariableW_t)(LPCWSTR lpName, LPC
 
 // the CreateProcessW func type
 typedef BOOL (WINAPI* tb_kernel32_CreateProcessW_t)(LPCWSTR lpApplicationName, LPCWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFO lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
-
-// the WaitForSingleObject func type
-typedef DWORD (WINAPI* tb_kernel32_WaitForSingleObject_t)(HANDLE hHandle, DWORD dwMilliseconds);
 
 // the WaitForMultipleObjects func type
 typedef DWORD (WINAPI* tb_kernel32_WaitForMultipleObjects_t)(DWORD  nCount, const HANDLE *lpHandles, BOOL bWaitAll, DWORD dwMilliseconds);
@@ -125,9 +115,6 @@ typedef struct __tb_kernel32_t
     // GetQueuedCompletionStatusEx
     tb_kernel32_GetQueuedCompletionStatusEx_t           GetQueuedCompletionStatusEx;
 
-    // InterlockedCompareExchange64
-    tb_kernel32_InterlockedCompareExchange64_t          InterlockedCompareExchange64;
-
     // GetEnvironmentVariableW
     tb_kernel32_GetEnvironmentVariableW_t               GetEnvironmentVariableW;
 
@@ -136,9 +123,6 @@ typedef struct __tb_kernel32_t
 
     // CreateProcessW
     tb_kernel32_CreateProcessW_t                        CreateProcessW;
-
-    // WaitForSingleObject
-    tb_kernel32_WaitForSingleObject_t                   WaitForSingleObject;
 
     // WaitForMultipleObjects
     tb_kernel32_WaitForMultipleObjects_t                WaitForMultipleObjects;
