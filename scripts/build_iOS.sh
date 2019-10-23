@@ -2,11 +2,11 @@
 rm -rf ./xmake
 rm -rf build
 
-xmake m package -p iphoneos -f "--demo=no --exception=y --regex=y --hash=y --zip=y --coroutine=y --exception=y --object=y --xml=y --charset=y --target_minver=8 --cxflags=\"-fembed-bitcode\" --mxflags=\"-fembed-bitcode\" --asflags=\"-fembed-bitcode\""
+xmake m package -p iphoneos -f "--demo=no --exception=y --regex=y --hash=y --zip=y --coroutine=y --exception=y --object=y --xml=y --charset=y --target_minver=10 --cxflags=\"-fembed-bitcode\" --mxflags=\"-fembed-bitcode\" --asflags=\"-fembed-bitcode\""
 
-mkdir build/iOS/ build/iOS/fat/ build/iOS/fat/library
+mkdir -p build/iOS/fat/lib
 
-mv build/tbox.pkg/iphoneos/universal/lib/release/libtbox.a build/iOS/fat/library/libtbox.a
+mv build/tbox.pkg/iphoneos/universal/lib/release/libtbox.a build/iOS/fat/lib/libtbox.a
 rm -rf build/tbox.pkg/iphoneos/universal
 rm -rf build/tbox.pkg/iphoneos/armv7/lib/release/
 rm -rf build/tbox.pkg/iphoneos/armv7s/lib/release/
