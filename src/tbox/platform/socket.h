@@ -88,6 +88,9 @@ typedef enum __tb_socket_ctrl_e
 ,   TB_SOCKET_CTRL_GET_SEND_BUFF_SIZE   = 5
 ,   TB_SOCKET_CTRL_SET_TCP_NODELAY      = 6
 ,   TB_SOCKET_CTRL_GET_TCP_NODELAY      = 7
+,   TB_SOCKET_CTRL_SET_TCP_KEEPINTVL    = 8
+,   TB_SOCKET_CTRL_SET_KEEPALIVE        = 9
+,   TB_SOCKET_CTRL_SET_NOSIGPIPE        = 10 //!< @note this operation always return true on windows
 
 }tb_socket_ctrl_e;
 
@@ -313,6 +316,8 @@ tb_long_t           tb_socket_urecvv(tb_socket_ref_t sock, tb_ipaddr_ref_t addr,
 tb_long_t           tb_socket_usendv(tb_socket_ref_t sock, tb_ipaddr_ref_t addr, tb_iovec_t const* list, tb_size_t size);
 
 /*! wait socket events
+ *
+ * @note we can wait for socket events in the coroutine
  *
  * @param sock      the sock 
  * @param events    the socket events

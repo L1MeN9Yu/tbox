@@ -28,6 +28,9 @@
 #include "keyword.h"
 #include "compiler.h"
 #include "cpu.h"
+#if __tb_has_feature__(c_atomic) && !defined(__STDC_NO_ATOMICS__)
+#   include <stdatomic.h>
+#endif
 
 /* //////////////////////////////////////////////////////////////////////////////////////
  * macros
@@ -70,7 +73,7 @@ typedef tb_int_t                    tb_int32_t;
 typedef tb_int32_t                  tb_sint32_t;
 typedef tb_uint_t                   tb_uint32_t;
 typedef char                        tb_char_t;
-typedef tb_int32_t                  tb_uchar_t;
+typedef unsigned char               tb_uchar_t;
 typedef tb_uint8_t                  tb_byte_t;
 typedef void                        tb_void_t;
 typedef tb_void_t*                  tb_pointer_t;
@@ -107,7 +110,8 @@ typedef tb_int32_t                  tb_wchar_t;
 #if defined(TB_COMPILER_IS_MSVC)
 typedef __int64                     tb_int64_t;
 typedef unsigned __int64            tb_uint64_t;
-#elif (TB_CPU_BITSIZE == 64) && !defined(TB_COMPILER_IS_MINGW)
+#elif (defined(__LONG_WIDTH__) && __LONG_WIDTH__ == 8) || \
+        (defined(__SIZEOF_LONG__) && __SIZEOF_LONG__ == 8) 
 typedef signed long                 tb_int64_t;
 typedef unsigned long               tb_uint64_t;
 #else
@@ -142,18 +146,45 @@ typedef tb_int32_t                  tb_fixed16_t;
 typedef tb_int32_t                  tb_fixed30_t;
 typedef tb_fixed16_t                tb_fixed_t;
 
-/// the atomic type
-#if TB_CPU_BIT64
-typedef __tb_volatile__ __tb_aligned__(8) tb_long_t     tb_atomic_t;
+/// the atomic32 type, need be aligned for arm, ..
+#if (__tb_has_feature__(c_atomic) && !defined(__STDC_NO_ATOMICS__))
+typedef __tb_volatile__ _Atomic tb_int32_t              tb_atomic32_t;
 #else
-typedef __tb_volatile__ __tb_aligned__(4) tb_long_t     tb_atomic_t;
+typedef __tb_volatile__  __tb_aligned__(4) tb_int32_t   tb_atomic32_t;
 #endif
 
 /// the atomic64 type, need be aligned for arm, ..
-typedef __tb_volatile__  __tb_aligned__(8) tb_hong_t    tb_atomic64_t;
+#if (__tb_has_feature__(c_atomic) && !defined(__STDC_NO_ATOMICS__)) 
+typedef __tb_volatile__ _Atomic tb_int64_t              tb_atomic64_t;
+#else
+typedef __tb_volatile__ __tb_aligned__(8) tb_int64_t    tb_atomic64_t;
+#endif
+
+/// the atomic type
+#if TB_CPU_BIT64
+typedef tb_atomic64_t                                   tb_atomic_t;
+#else
+typedef tb_atomic32_t                                   tb_atomic_t;
+#endif
+
+/// the atomic flag type
+#if (__tb_has_feature__(c_atomic) && !defined(__STDC_NO_ATOMICS__)) 
+typedef __tb_volatile__ atomic_flag                     tb_atomic_flag_t;
+#elif (defined(TB_COMPILER_IS_GCC) && defined(__ATOMIC_SEQ_CST)) || \
+        (defined(TB_CONFIG_OS_WINDOWS) && defined(TB_CONFIG_WINDOWS_HAVE__INTERLOCKEDEXCHANGE8) && defined(TB_CONFIG_WINDOWS_HAVE__INTERLOCKEDOR8))
+typedef __tb_volatile__ struct __tb_atomic_flag_t
+{
+    unsigned char __val;
+}                                                       tb_atomic_flag_t;
+#else
+typedef __tb_volatile__ struct __tb_atomic_flag_t
+{
+    tb_atomic32_t __val;
+}                                                       tb_atomic_flag_t;
+#endif
 
 /// the spinlock type
-typedef tb_atomic_t                 tb_spinlock_t;
+typedef tb_atomic_flag_t            tb_spinlock_t;
 
 /// the spinlock ref type
 typedef tb_spinlock_t*              tb_spinlock_ref_t;

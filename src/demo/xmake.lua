@@ -66,9 +66,24 @@ target("demo")
         add_files("object/*.c")
     end
 
+    add_options("force-utf8")
+
     -- add the source files for the charset module
     if has_config("charset") then add_files("other/charset.c") end
 
     -- add the source files for the database module
     if has_config("database") then add_files("database/sql.c") end
-    
+
+    -- enable xp compatibility mode
+    if is_plat("windows") then
+        if is_arch("x86") then
+            add_ldflags("/subsystem:console,5.01")
+        else
+            add_ldflags("/subsystem:console,5.02")
+        end
+    end
+
+    -- link mingw/libgcc
+    if is_plat("mingw") then
+        add_ldflags("-static-libgcc", {force = true})
+    end

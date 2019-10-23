@@ -31,79 +31,88 @@
  * macros
  */
 
-#define tb_atomic64_fetch_and_set(a, v)         tb_atomic64_fetch_and_set_sync(a, v)
-#define tb_atomic64_fetch_and_pset(a, p, v)     tb_atomic64_fetch_and_pset_sync(a, p, v)
+#ifdef __ATOMIC_SEQ_CST
 
-#define tb_atomic64_fetch_and_add(a, v)         tb_atomic64_fetch_and_add_sync(a, v)
-#define tb_atomic64_fetch_and_sub(a, v)         tb_atomic64_fetch_and_sub_sync(a, v)
-#define tb_atomic64_fetch_and_or(a, v)          tb_atomic64_fetch_and_or_sync(a, v)
-#define tb_atomic64_fetch_and_and(a, v)         tb_atomic64_fetch_and_and_sync(a, v)
+#   define tb_atomic64_init(a, v)                           tb_atomic64_set_explicit_gcc(a, v, __ATOMIC_RELAXED)
+#   define tb_atomic64_get(a)                               tb_atomic64_get_explicit_gcc(a, __ATOMIC_SEQ_CST)
+#   define tb_atomic64_get_explicit(a, mo)                  tb_atomic64_get_explicit_gcc(a, mo)
+#   define tb_atomic64_set(a, v)                            tb_atomic64_set_explicit_gcc(a, v, __ATOMIC_SEQ_CST)
+#   define tb_atomic64_set_explicit(a, v, mo)               tb_atomic64_set_explicit_gcc(a, v, mo)
+#   define tb_atomic64_compare_and_swap(a, p, v)            tb_atomic64_compare_and_swap_explicit_gcc(a, p, v, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)
+#   define tb_atomic64_compare_and_swap_explicit(a, p, v, succ, fail) \
+                                                            tb_atomic64_compare_and_swap_explicit_gcc(a, p, v, succ, fail)
+#   define tb_atomic64_compare_and_swap_weak(a, p, v)       tb_atomic64_compare_and_swap_weak_explicit_gcc(a, p, v, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)
+#   define tb_atomic64_compare_and_swap_weak_explicit(a, p, v, succ, fail) \
+                                                            tb_atomic64_compare_and_swap_weak_explicit_gcc(a, p, v, succ, fail)
+#   define tb_atomic64_fetch_and_set(a, v)                  tb_atomic64_fetch_and_set_explicit_gcc(a, v, __ATOMIC_SEQ_CST)
+#   define tb_atomic64_fetch_and_set_explicit(a, v, mo)     tb_atomic64_fetch_and_set_explicit_gcc(a, v, mo)
+#   define tb_atomic64_fetch_and_add(a, v)                  __atomic_fetch_add(a, v, __ATOMIC_SEQ_CST)
+#   define tb_atomic64_fetch_and_add_explicit(a, v, mo)     __atomic_fetch_add(a, v, mo)
+#   define tb_atomic64_fetch_and_sub(a, v)                  __atomic_fetch_sub(a, v, __ATOMIC_SEQ_CST)
+#   define tb_atomic64_fetch_and_sub_explicit(a, v, mo)     __atomic_fetch_sub(a, v, mo)
+#   define tb_atomic64_fetch_and_or(a, v)                   __atomic_fetch_or(a, v, __ATOMIC_SEQ_CST)
+#   define tb_atomic64_fetch_and_or_explicit(a, v, mo)      __atomic_fetch_or(a, v, mo)
+#   define tb_atomic64_fetch_and_and(a, v)                  __atomic_fetch_and(a, v, __ATOMIC_SEQ_CST)
+#   define tb_atomic64_fetch_and_and_explicit(a, v, mo)     __atomic_fetch_and(a, v, mo)
+#   define tb_atomic64_fetch_and_xor(a, v)                  __atomic_fetch_xor(a, v, __ATOMIC_SEQ_CST)
+#   define tb_atomic64_fetch_and_xor_explicit(a, v, mo)     __atomic_fetch_xor(a, v, mo)
 
-#define tb_atomic64_add_and_fetch(a, v)         tb_atomic64_add_and_fetch_sync(a, v)
-#define tb_atomic64_sub_and_fetch(a, v)         tb_atomic64_sub_and_fetch_sync(a, v)
-#define tb_atomic64_or_and_fetch(a, v)          tb_atomic64_or_and_fetch_sync(a, v)
-#define tb_atomic64_and_and_fetch(a, v)         tb_atomic64_and_and_fetch_sync(a, v)
+#else
+#   define tb_atomic64_compare_and_swap(a, p, v)             tb_atomic64_compare_and_swap_gcc(a, p, v)
+#   define tb_atomic64_fetch_and_cmpset(a, p, v)            __sync_val_compare_and_swap_8(a, p, v)
+
+#   define tb_atomic64_fetch_and_add(a, v)                  __sync_fetch_and_add_8(a, v)
+#   define tb_atomic64_fetch_and_sub(a, v)                  __sync_fetch_and_sub_8(a, v)
+#   define tb_atomic64_fetch_and_or(a, v)                   __sync_fetch_and_or_8(a, v)
+#   define tb_atomic64_fetch_and_and(a, v)                  __sync_fetch_and_and_8(a, v)
 
 // FIXME: ios armv6: no defined refernece?
-#if !(defined(TB_CONFIG_OS_IOS) && TB_ARCH_ARM_VERSION < 7)
-#   define tb_atomic64_fetch_and_xor(a, v)      tb_atomic64_fetch_and_xor_sync(a, v)
-#   define tb_atomic64_xor_and_fetch(a, v)      tb_atomic64_xor_and_fetch_sync(a, v)
+#   if !(defined(TB_CONFIG_OS_IOS) && TB_ARCH_ARM_VERSION < 7)
+#       define tb_atomic64_fetch_and_xor(a, v)              __sync_fetch_and_xor_8(a, v)
+#   endif
 #endif
 
 /* //////////////////////////////////////////////////////////////////////////////////////
- * inlines
+ * inline implementation
  */
-static __tb_inline__ tb_hong_t tb_atomic64_fetch_and_set_sync(tb_atomic64_t* a, tb_hong_t v)
+#ifdef __ATOMIC_SEQ_CST
+static __tb_inline__ tb_int64_t tb_atomic64_get_explicit_gcc(tb_atomic64_t* a, tb_int_t mo)
 {
-    return __sync_lock_test_and_set_8(a, v);
+    tb_assert(a);
+    tb_int64_t t;
+    __atomic_load(a, &t, mo);
+    return t;
 }
-static __tb_inline__ tb_hong_t tb_atomic64_fetch_and_pset_sync(tb_atomic64_t* a, tb_hong_t p, tb_hong_t v)
+static __tb_inline__ tb_void_t tb_atomic64_set_explicit_gcc(tb_atomic64_t* a, tb_int64_t v, tb_int_t mo)
 {
-    return __sync_val_compare_and_swap_8(a, p, v);
+    tb_assert(a);
+    __atomic_store(a, &v, mo);
 }
-static __tb_inline__ tb_hong_t tb_atomic64_fetch_and_add_sync(tb_atomic64_t* a, tb_hong_t v)
+static __tb_inline__ tb_bool_t tb_atomic64_compare_and_swap_explicit_gcc(tb_atomic64_t* a, tb_int64_t* p, tb_int64_t v, tb_int_t succ, tb_int_t fail)
 {
-    return __sync_fetch_and_add_8(a, v);
+    tb_assert(a);
+    return __atomic_compare_exchange(a, p, &v, 0, succ, fail);	
 }
-static __tb_inline__ tb_hong_t tb_atomic64_fetch_and_sub_sync(tb_atomic64_t* a, tb_hong_t v)
+static __tb_inline__ tb_bool_t tb_atomic64_compare_and_swap_weak_explicit_gcc(tb_atomic64_t* a, tb_int64_t* p, tb_int64_t v, tb_int_t succ, tb_int_t fail)
 {
-    return __sync_fetch_and_sub_8(a, v);
+    tb_assert(a);
+    return __atomic_compare_exchange(a, p, &v, 1, succ, fail);	
 }
-#if !(defined(TB_CONFIG_OS_IOS) && (TB_ARCH_ARM_VERSION < 7))
-static __tb_inline__ tb_hong_t tb_atomic64_fetch_and_xor_sync(tb_atomic64_t* a, tb_hong_t v)
+static __tb_inline__ tb_int64_t tb_atomic64_fetch_and_set_explicit_gcc(tb_atomic64_t* a, tb_int64_t v, tb_int_t mo)
 {
-    return __sync_fetch_and_xor_8(a, v);
+    tb_assert(a);
+    tb_int64_t o;
+    __atomic_exchange(a, &v, &o, mo);	
+    return o;
 }
-#endif
-static __tb_inline__ tb_hong_t tb_atomic64_fetch_and_and_sync(tb_atomic64_t* a, tb_hong_t v)
+#else
+static __tb_inline__ tb_bool_t tb_atomic64_compare_and_swap_gcc(tb_atomic64_t* a, tb_int64_t* p, tb_int64_t v)
 {
-    return __sync_fetch_and_and_8(a, v);
-}
-static __tb_inline__ tb_hong_t tb_atomic64_fetch_and_or_sync(tb_atomic64_t* a, tb_hong_t v)
-{
-    return __sync_fetch_and_or_8(a, v);
-}
-static __tb_inline__ tb_hong_t tb_atomic64_add_and_fetch_sync(tb_atomic64_t* a, tb_hong_t v)
-{
-    return __sync_add_and_fetch_8(a, v);
-}
-static __tb_inline__ tb_hong_t tb_atomic64_sub_and_fetch_sync(tb_atomic64_t* a, tb_hong_t v)
-{
-    return __sync_sub_and_fetch_8(a, v);
-}
-#if !(defined(TB_CONFIG_OS_IOS) && (TB_ARCH_ARM_VERSION < 7))
-static __tb_inline__ tb_hong_t tb_atomic64_xor_and_fetch_sync(tb_atomic64_t* a, tb_hong_t v)
-{
-    return __sync_xor_and_fetch_8(a, v);
+    tb_assert(a && p);
+    tb_int64_t e = *p;
+    *p = __sync_val_compare_and_swap_8(a, e, v);
+    return *p == e;
 }
 #endif
-static __tb_inline__ tb_hong_t tb_atomic64_and_and_fetch_sync(tb_atomic64_t* a, tb_hong_t v)
-{
-    return __sync_and_and_fetch_8(a, v);
-}
-static __tb_inline__ tb_hong_t tb_atomic64_or_and_fetch_sync(tb_atomic64_t* a, tb_hong_t v)
-{
-    return __sync_or_and_fetch_8(a, v);
-}
 
 #endif

@@ -26,10 +26,12 @@
  * includes
  */
 #include "prefix.h"
+#include "cpu.h"
 #include "page.h"
 #include "path.h"
 #include "file.h"
 #include "time.h"
+#include "pipe.h"
 #include "mutex.h"
 #include "event.h"
 #include "timer.h"
@@ -38,19 +40,17 @@
 #include "socket.h"
 #include "thread.h"
 #include "atomic.h"
-#include "memory.h"
 #include "poller.h"
 #include "context.h"
 #include "ifaddrs.h"
-#include "barrier.h"
 #include "dynamic.h"
 #include "process.h"
+#include "stdfile.h"
+#include "filelock.h"
 #include "syserror.h"
 #include "addrinfo.h"
 #include "spinlock.h"
-#include "atomic64.h"
 #include "hostname.h"
-#include "processor.h"
 #include "semaphore.h"
 #include "backtrace.h"
 #include "directory.h"
@@ -59,5 +59,10 @@
 #include "environment.h"
 #include "thread_pool.h"
 #include "thread_local.h"
+#include "native_memory.h"
+#include "virtual_memory.h"
+#ifdef TB_CONFIG_API_HAVE_DEPRECATED
+#   include "deprecated/deprecated.h"
+#endif
 
 #endif

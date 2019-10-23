@@ -43,10 +43,17 @@ typedef struct __tb_process_t
     // the process info
     PROCESS_INFORMATION     pi;
 
-    // the attributes
-    tb_process_attr_t       attr;
+    // the user private data
+    tb_cpointer_t           priv;
 
 }tb_process_t; 
+
+/* //////////////////////////////////////////////////////////////////////////////////////
+ * declaration
+ */
+__tb_extern_c_enter__
+HANDLE tb_pipe_file_handle(tb_pipe_file_ref_t file);
+__tb_extern_c_leave__
 
 /* //////////////////////////////////////////////////////////////////////////////////////
  * implementation
@@ -126,15 +133,8 @@ tb_process_ref_t tb_process_init_cmd(tb_char_t const* cmd, tb_process_attr_ref_t
         // init startup info
         process->si.cb = sizeof(process->si);
 
-        // init attributes
-        if (attr)
-        {
-            // save it
-            process->attr = *attr;
-
-            // do not save envp, maybe stack pointer
-            process->attr.envp = tb_null;
-        }
+        // save the user private data
+        if (attr) process->priv = attr->priv;
 
         // init flags
         DWORD flags = 0;
@@ -206,45 +206,70 @@ tb_process_ref_t tb_process_init_cmd(tb_char_t const* cmd, tb_process_attr_ref_t
 
         // redirect the stdout
         BOOL bInheritHandle = FALSE;
-        if (attr && attr->outfile)
+        if (attr)
         {
-            // the outmode
-            tb_size_t outmode = attr->outmode;
+            if (attr->outtype == TB_PROCESS_REDIRECT_TYPE_FILEPATH && attr->outpath)
+            {
+                // the outmode
+                tb_size_t outmode = attr->outmode;
 
-            // no mode? uses the default mode
-            if (!outmode) outmode = TB_FILE_MODE_RW | TB_FILE_MODE_CREAT | TB_FILE_MODE_TRUNC;
+                // no mode? uses the default mode
+                if (!outmode) outmode = TB_FILE_MODE_RW | TB_FILE_MODE_CREAT | TB_FILE_MODE_TRUNC;
 
-            // enable handles
-            process->si.dwFlags |= STARTF_USESTDHANDLES;
+                // enable handles
+                process->si.dwFlags |= STARTF_USESTDHANDLES;
 
-            // open file
-            process->si.hStdOutput = (HANDLE)tb_file_init(attr->outfile, outmode);
-            tb_assertf_pass_and_check_break(process->si.hStdOutput, "cannot redirect stdout to file: %s", attr->outfile);
+                // open file
+                process->si.hStdOutput = (HANDLE)tb_file_init(attr->outpath, outmode);
+                tb_assertf_pass_and_check_break(process->si.hStdOutput, "cannot redirect stdout to file: %s", attr->outpath);
 
-            // enable inherit
-            tb_kernel32()->SetHandleInformation(process->si.hStdOutput, HANDLE_FLAG_INHERIT, TRUE);
-            bInheritHandle = TRUE;
-        }
+                // enable inherit
+                tb_kernel32()->SetHandleInformation(process->si.hStdOutput, HANDLE_FLAG_INHERIT, TRUE);
+                bInheritHandle = TRUE;
+            }
+            else if ((attr->outtype == TB_PROCESS_REDIRECT_TYPE_PIPE && attr->outpipe) ||
+                     (attr->outtype == TB_PROCESS_REDIRECT_TYPE_FILE && attr->outfile))
+            {
+                // enable handles
+                process->si.dwFlags |= STARTF_USESTDHANDLES;
+                process->si.hStdOutput = attr->outtype == TB_PROCESS_REDIRECT_TYPE_PIPE? tb_pipe_file_handle(attr->outpipe) : (HANDLE)attr->outfile;
 
-        // redirect the stderr
-        if (attr && attr->errfile)
-        {
-            // the errmode
-            tb_size_t errmode = attr->errmode;
+                // enable inherit
+                tb_kernel32()->SetHandleInformation(process->si.hStdOutput, HANDLE_FLAG_INHERIT, TRUE);
+                bInheritHandle = TRUE;
+            }
 
-            // no mode? uses the default mode
-            if (!errmode) errmode = TB_FILE_MODE_RW | TB_FILE_MODE_CREAT | TB_FILE_MODE_TRUNC;
+            // redirect the stderr
+            if (attr->errtype == TB_PROCESS_REDIRECT_TYPE_FILEPATH && attr->errpath)
+            {
+                // the errmode
+                tb_size_t errmode = attr->errmode;
 
-            // enable handles
-            process->si.dwFlags |= STARTF_USESTDHANDLES;
+                // no mode? uses the default mode
+                if (!errmode) errmode = TB_FILE_MODE_RW | TB_FILE_MODE_CREAT | TB_FILE_MODE_TRUNC;
 
-            // open file
-            process->si.hStdError = (HANDLE)tb_file_init(attr->errfile, errmode);
-            tb_assertf_pass_and_check_break(process->si.hStdError, "cannot redirect stderr to file: %s", attr->errfile);
+                // enable handles
+                process->si.dwFlags |= STARTF_USESTDHANDLES;
 
-            // enable inherit
-            tb_kernel32()->SetHandleInformation(process->si.hStdError, HANDLE_FLAG_INHERIT, TRUE);
-            bInheritHandle = TRUE;
+                // open file
+                process->si.hStdError = (HANDLE)tb_file_init(attr->errpath, errmode);
+                tb_assertf_pass_and_check_break(process->si.hStdError, "cannot redirect stderr to file: %s", attr->errpath);
+
+                // enable inherit
+                tb_kernel32()->SetHandleInformation(process->si.hStdError, HANDLE_FLAG_INHERIT, TRUE);
+                bInheritHandle = TRUE;
+            }
+            else if ((attr->errtype == TB_PROCESS_REDIRECT_TYPE_PIPE && attr->errpipe) ||
+                     (attr->errtype == TB_PROCESS_REDIRECT_TYPE_FILE && attr->errfile))
+            {
+                // enable handles
+                process->si.dwFlags |= STARTF_USESTDHANDLES;
+                process->si.hStdError = attr->errtype == TB_PROCESS_REDIRECT_TYPE_PIPE? tb_pipe_file_handle(attr->errpipe) : (HANDLE)attr->errfile;
+
+                // enable inherit
+                tb_kernel32()->SetHandleInformation(process->si.hStdError, HANDLE_FLAG_INHERIT, TRUE);
+                bInheritHandle = TRUE;
+            }
         }
 
         // init process security attributes
@@ -338,6 +363,22 @@ tb_void_t tb_process_kill(tb_process_ref_t self)
     if (process->pi.hProcess != INVALID_HANDLE_VALUE)
         tb_kernel32()->TerminateProcess(process->pi.hProcess, -1);
 }
+tb_cpointer_t tb_process_priv(tb_process_ref_t self)
+{
+    // check
+    tb_process_t* process = (tb_process_t*)self;
+    tb_assert_and_check_return_val(process, tb_null);
+
+    return process->priv;
+}
+tb_void_t tb_process_priv_set(tb_process_ref_t self, tb_cpointer_t priv)
+{
+    // check
+    tb_process_t* process = (tb_process_t*)self;
+    tb_assert_and_check_return(process);
+
+    process->priv = priv;
+}
 tb_void_t tb_process_resume(tb_process_ref_t self)
 {
     // check
@@ -366,7 +407,7 @@ tb_long_t tb_process_wait(tb_process_ref_t self, tb_long_t* pstatus, tb_long_t t
 
     // wait it
     tb_long_t   ok = -1;
-    DWORD       result = tb_kernel32()->WaitForSingleObject(process->pi.hProcess, timeout < 0? INFINITE : (DWORD)timeout);
+    DWORD       result = WaitForSingleObject(process->pi.hProcess, timeout < 0? INFINITE : (DWORD)timeout);
     switch (result)
     {
     case WAIT_OBJECT_0: // ok
@@ -432,9 +473,9 @@ tb_long_t tb_process_waitlist(tb_process_ref_t const* processes, tb_process_wait
             tb_assert_and_check_return_val(process, -1);
 
             // save process info
-            infolist[infosize].index    = index;
+            infolist[infosize].index    = (tb_int_t)index;
             infolist[infosize].process  = (tb_process_ref_t)process;
-            infolist[infosize].status   = tb_kernel32()->GetExitCodeProcess(process->pi.hProcess, &exitcode)? (tb_long_t)exitcode : -1;  
+            infolist[infosize].status   = tb_kernel32()->GetExitCodeProcess(process->pi.hProcess, &exitcode)? (tb_int_t)exitcode : -1;  
             infosize++;
 
             // close thread handle

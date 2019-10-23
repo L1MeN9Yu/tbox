@@ -203,7 +203,7 @@ tb_long_t tb_stream_wait(tb_stream_ref_t self, tb_size_t wait, tb_long_t timeout
     tb_assert_and_check_return_val(stream && stream->wait, -1);
 
     // stoped?
-    tb_assert_and_check_return_val(TB_STATE_OPENED == tb_atomic_get(&stream->istate), -1);
+    tb_assert_and_check_return_val(TB_STATE_OPENED == tb_atomic32_get(&stream->istate), -1);
 
     // wait it
     tb_long_t ok = stream->wait(self, wait, timeout);
@@ -330,7 +330,7 @@ tb_bool_t tb_stream_is_opened(tb_stream_ref_t self)
     tb_assert_and_check_return_val(stream, tb_false);
 
     // the state
-    tb_size_t state = tb_atomic_get(&stream->istate);
+    tb_size_t state = tb_atomic32_get(&stream->istate);
     
     // is opened?
     return (TB_STATE_OPENED == state || TB_STATE_KILLING == state)? tb_true : tb_false;
@@ -342,7 +342,7 @@ tb_bool_t tb_stream_is_closed(tb_stream_ref_t self)
     tb_assert_and_check_return_val(stream, tb_false);
 
     // the state
-    tb_size_t state = tb_atomic_get(&stream->istate);
+    tb_size_t state = tb_atomic32_get(&stream->istate);
 
     // is closed?
     return (TB_STATE_CLOSED == state || TB_STATE_KILLED == state)? tb_true : tb_false;
@@ -354,7 +354,7 @@ tb_bool_t tb_stream_is_killed(tb_stream_ref_t self)
     tb_assert_and_check_return_val(stream, tb_false);
 
     // the state
-    tb_size_t state = tb_atomic_get(&stream->istate);
+    tb_size_t state = tb_atomic32_get(&stream->istate);
 
     // is killed?
     return (TB_STATE_KILLED == state || TB_STATE_KILLING == state)? tb_true : tb_false;
@@ -577,10 +577,10 @@ tb_void_t tb_stream_kill(tb_stream_ref_t self)
     tb_assert_and_check_return(stream);
 
     // trace
-    tb_trace_d("kill: %s: state: %s: ..", tb_url_cstr(&stream->url), tb_state_cstr(tb_atomic_get(&stream->istate)));
+    tb_trace_d("kill: %s: state: %s: ..", tb_url_cstr(&stream->url), tb_state_cstr(tb_atomic32_get(&stream->istate)));
 
     // opened? kill it
-    if (TB_STATE_OPENED == tb_atomic_fetch_and_pset(&stream->istate, TB_STATE_OPENED, TB_STATE_KILLING))
+    if (TB_STATE_OPENED == tb_atomic32_fetch_and_cmpset(&stream->istate, TB_STATE_OPENED, TB_STATE_KILLING))
     {
         // kill it
         if (stream->kill) stream->kill(self);
@@ -589,7 +589,7 @@ tb_void_t tb_stream_kill(tb_stream_ref_t self)
         tb_trace_d("kill: %s: ok", tb_url_cstr(&stream->url));
     }
     // opening? kill it
-    else if (TB_STATE_OPENING == tb_atomic_fetch_and_pset(&stream->istate, TB_STATE_OPENING, TB_STATE_KILLING))
+    else if (TB_STATE_OPENING == tb_atomic32_fetch_and_cmpset(&stream->istate, TB_STATE_OPENING, TB_STATE_KILLING))
     {
         // kill it
         if (stream->kill) stream->kill(self);
@@ -600,7 +600,7 @@ tb_void_t tb_stream_kill(tb_stream_ref_t self)
     else 
     {
         // closed? killed
-        tb_atomic_pset(&stream->istate, TB_STATE_CLOSED, TB_STATE_KILLED);
+        tb_atomic32_fetch_and_cmpset(&stream->istate, TB_STATE_CLOSED, TB_STATE_KILLED);
     }
 }
 tb_bool_t tb_stream_open(tb_stream_ref_t self)
@@ -613,7 +613,7 @@ tb_bool_t tb_stream_open(tb_stream_ref_t self)
     tb_check_return_val(!tb_stream_is_opened(self), tb_true);
 
     // closed?
-    tb_assert_and_check_return_val(TB_STATE_CLOSED == tb_atomic_get(&stream->istate), tb_false);
+    tb_assert_and_check_return_val(TB_STATE_CLOSED == tb_atomic32_get(&stream->istate), tb_false);
 
     // init offset
     stream->offset = 0;
@@ -625,7 +625,7 @@ tb_bool_t tb_stream_open(tb_stream_ref_t self)
     tb_bool_t ok = stream->open(self);
 
     // opened
-    if (ok) tb_atomic_set(&stream->istate, TB_STATE_OPENED);
+    if (ok) tb_atomic32_set(&stream->istate, TB_STATE_OPENED);
 
     // ok?
     return ok;
@@ -649,7 +649,7 @@ tb_bool_t tb_stream_clos(tb_stream_ref_t self)
     stream->offset = 0;
     stream->bwrited = 0;
     stream->state = TB_STATE_OK;
-    tb_atomic_set(&stream->istate, TB_STATE_CLOSED);
+    tb_atomic32_set(&stream->istate, TB_STATE_CLOSED);
 
     // clear cache
     tb_queue_buffer_clear(&stream->cache);
@@ -667,7 +667,7 @@ tb_bool_t tb_stream_need(tb_stream_ref_t self, tb_byte_t** data, tb_size_t size)
     tb_assert_and_check_return_val(stream && tb_stream_is_opened(self) && stream->read && stream->wait, tb_false);
 
     // stoped?
-    tb_assert_and_check_return_val(TB_STATE_OPENED == tb_atomic_get(&stream->istate), tb_false);
+    tb_assert_and_check_return_val(TB_STATE_OPENED == tb_atomic32_get(&stream->istate), tb_false);
 
     // have writed cache? sync first
     if (stream->bwrited && !tb_queue_buffer_null(&stream->cache) && !tb_stream_sync(self, tb_false)) return tb_false;
@@ -689,8 +689,6 @@ tb_bool_t tb_stream_need(tb_stream_ref_t self, tb_byte_t** data, tb_size_t size)
     {
         // save data
         *data = tb_queue_buffer_head(&stream->cache);
-
-        // ok
         return tb_true;
     }
 
@@ -703,7 +701,7 @@ tb_bool_t tb_stream_need(tb_stream_ref_t self, tb_byte_t** data, tb_size_t size)
 
     // fill cache
     tb_size_t read = 0;
-    while (read < push && (TB_STATE_OPENED == tb_atomic_get(&stream->istate)))
+    while (read < push && (TB_STATE_OPENED == tb_atomic32_get(&stream->istate)))
     {
         // read data
         tb_long_t real = stream->read(self, tail + read, push - read);
@@ -733,7 +731,7 @@ tb_bool_t tb_stream_need(tb_stream_ref_t self, tb_byte_t** data, tb_size_t size)
     if (size > tb_queue_buffer_size(&stream->cache))
     {
         // killed? save state
-        if (!stream->state && (TB_STATE_KILLING == tb_atomic_get(&stream->istate)))
+        if (!stream->state && (TB_STATE_KILLING == tb_atomic32_get(&stream->istate)))
             stream->state = TB_STATE_KILLED;
 
         // failed
@@ -745,6 +743,67 @@ tb_bool_t tb_stream_need(tb_stream_ref_t self, tb_byte_t** data, tb_size_t size)
 
     // ok
     return tb_true;
+}
+tb_long_t tb_stream_peek(tb_stream_ref_t self, tb_byte_t** data, tb_size_t size)
+{
+    // check 
+    tb_stream_t* stream = tb_stream_cast(self);
+    tb_assert_and_check_return_val(data && size, -1);
+
+    // check self
+    tb_assert_and_check_return_val(stream && tb_stream_is_opened(self) && stream->read && stream->wait, -1);
+
+    // stoped?
+    tb_assert_and_check_return_val(TB_STATE_OPENED == tb_atomic32_get(&stream->istate), -1);
+
+    // have writed cache? sync first
+    if (stream->bwrited && !tb_queue_buffer_null(&stream->cache) && !tb_stream_sync(self, tb_false)) return -1;
+
+    // switch to the read cache mode
+    if (stream->bwrited && tb_queue_buffer_null(&stream->cache)) stream->bwrited = 0;
+
+    // check the cache mode, must be read cache
+    tb_assert_and_check_return_val(!stream->bwrited, -1);
+
+    // not enough? grow the cache first
+    if (tb_queue_buffer_maxn(&stream->cache) < size) tb_queue_buffer_resize(&stream->cache, size);
+
+    // check
+    tb_assert_and_check_return_val(tb_queue_buffer_maxn(&stream->cache) && size <= tb_queue_buffer_maxn(&stream->cache), -1);
+
+    // attempt to peek data from cache directly?
+    tb_size_t cached_size = tb_queue_buffer_size(&stream->cache);
+    if (cached_size) 
+    {
+        *data = tb_queue_buffer_head(&stream->cache);
+        return tb_min(size, cached_size);
+    }
+
+    // cache is null now.
+    tb_assert(tb_queue_buffer_null(&stream->cache));
+
+    // enter cache for push
+    tb_size_t   push = 0;
+    tb_byte_t*  tail = tb_queue_buffer_push_init(&stream->cache, &push);
+    tb_assert_and_check_return_val(tail && push, -1);
+
+    // push data to cache from self
+    tb_assert(stream->read);
+    tb_long_t real = stream->read(self, tail, push);
+    tb_check_return_val(real >= 0, -1);
+
+    // peek data from cache
+    if (real > 0)
+    {
+        // leave cache for push
+        tb_queue_buffer_push_exit(&stream->cache, real);
+
+        // peek data from cache again
+        *data = tb_queue_buffer_head(&stream->cache);
+        return tb_min(size, real);
+    }
+    // need wait
+    else return 0; 
 }
 tb_long_t tb_stream_read(tb_stream_ref_t self, tb_byte_t* data, tb_size_t size)
 {
@@ -908,10 +967,10 @@ tb_bool_t tb_stream_bread(tb_stream_ref_t self, tb_byte_t* data, tb_size_t size)
 
     // read data from cache
     tb_long_t read = 0;
-    while (read < size && (TB_STATE_OPENED == tb_atomic_get(&stream->istate)))
+    while (read < size && (TB_STATE_OPENED == tb_atomic32_get(&stream->istate)))
     {
         // read data
-        tb_long_t real = tb_stream_read(self, data + read, size - read);    
+        tb_long_t real = tb_stream_read(self, data + read, tb_min(size - read, TB_STREAM_BLOCK_MAXN));    
         if (real > 0) read += real;
         else if (!real)
         {
@@ -926,7 +985,7 @@ tb_bool_t tb_stream_bread(tb_stream_ref_t self, tb_byte_t* data, tb_size_t size)
     }
 
     // killed? save state
-    if (read != size && !stream->state && (TB_STATE_KILLING == tb_atomic_get(&stream->istate)))
+    if (read != size && !stream->state && (TB_STATE_KILLING == tb_atomic32_get(&stream->istate)))
         stream->state = TB_STATE_KILLED;
 
     // ok?
@@ -941,10 +1000,10 @@ tb_bool_t tb_stream_bwrit(tb_stream_ref_t self, tb_byte_t const* data, tb_size_t
 
     // writ data to cache
     tb_long_t writ = 0;
-    while (writ < size && (TB_STATE_OPENED == tb_atomic_get(&stream->istate)))
+    while (writ < size && (TB_STATE_OPENED == tb_atomic32_get(&stream->istate)))
     {
         // writ data
-        tb_long_t real = tb_stream_writ(self, data + writ, size - writ);    
+        tb_long_t real = tb_stream_writ(self, data + writ, tb_min(size - writ, TB_STREAM_BLOCK_MAXN));    
         if (real > 0) writ += real;
         else if (!real)
         {
@@ -959,7 +1018,7 @@ tb_bool_t tb_stream_bwrit(tb_stream_ref_t self, tb_byte_t const* data, tb_size_t
     }
 
     // killed? save state
-    if (writ != size && !stream->state && (TB_STATE_KILLING == tb_atomic_get(&stream->istate)))
+    if (writ != size && !stream->state && (TB_STATE_KILLING == tb_atomic32_get(&stream->istate)))
         stream->state = TB_STATE_KILLED;
 
     // ok?
@@ -972,7 +1031,7 @@ tb_bool_t tb_stream_sync(tb_stream_ref_t self, tb_bool_t bclosing)
     tb_assert_and_check_return_val(stream && stream->writ && stream->wait && tb_stream_is_opened(self), tb_false);
 
     // stoped?
-    tb_assert_and_check_return_val((TB_STATE_OPENED == tb_atomic_get(&stream->istate)), tb_false);
+    tb_assert_and_check_return_val((TB_STATE_OPENED == tb_atomic32_get(&stream->istate)), tb_false);
 
     // cached? sync cache first
     if (tb_queue_buffer_maxn(&stream->cache))
@@ -990,7 +1049,7 @@ tb_bool_t tb_stream_sync(tb_stream_ref_t self, tb_bool_t bclosing)
 
             // writ cache data to self
             tb_size_t   writ = 0;
-            while (writ < size && (TB_STATE_OPENED == tb_atomic_get(&stream->istate)))
+            while (writ < size && (TB_STATE_OPENED == tb_atomic32_get(&stream->istate)))
             {
                 // writ
                 tb_long_t real = stream->writ(self, head + writ, size - writ);
@@ -1021,7 +1080,7 @@ tb_bool_t tb_stream_sync(tb_stream_ref_t self, tb_bool_t bclosing)
             if (!tb_queue_buffer_null(&stream->cache))
             {
                 // killed? save state
-                if (!stream->state && (TB_STATE_KILLING == tb_atomic_get(&stream->istate)))
+                if (!stream->state && (TB_STATE_KILLING == tb_atomic32_get(&stream->istate)))
                     stream->state = TB_STATE_KILLED;
 
                 // failed
@@ -1041,7 +1100,7 @@ tb_bool_t tb_stream_seek(tb_stream_ref_t self, tb_hize_t offset)
     tb_assert_and_check_return_val(stream && tb_stream_is_opened(self), tb_false);
 
     // stoped?
-    tb_assert_and_check_return_val((TB_STATE_OPENED == tb_atomic_get(&stream->istate)), tb_false);
+    tb_assert_and_check_return_val((TB_STATE_OPENED == tb_atomic32_get(&stream->istate)), tb_false);
 
     // sync writed data first, @note must be called before tb_stream_size()
     if (stream->bwrited && !tb_stream_sync(self, tb_false)) return tb_false;
@@ -1073,9 +1132,9 @@ tb_bool_t tb_stream_seek(tb_stream_ref_t self, tb_hize_t offset)
         tb_bool_t ok = tb_false;
         if (tb_queue_buffer_maxn(&stream->cache))
         {
-            tb_size_t   size = 0;
-            tb_byte_t*  data = tb_queue_buffer_pull_init(&stream->cache, &size);
-            if (data && size && offset > curt && offset < curt + size)
+            tb_size_t   pull = 0;
+            tb_byte_t*  data = tb_queue_buffer_pull_init(&stream->cache, &pull);
+            if (data && pull && offset > curt && offset <= curt + pull)
             {
                 // seek it at the cache
                 tb_queue_buffer_pull_exit(&stream->cache, (tb_size_t)(offset - curt));
@@ -1087,6 +1146,7 @@ tb_bool_t tb_stream_seek(tb_stream_ref_t self, tb_hize_t offset)
                 ok = tb_true;
             }
         }
+
 
         // seek it
         if (!ok)
@@ -1131,43 +1191,62 @@ tb_long_t tb_stream_bread_line(tb_stream_ref_t self, tb_char_t* data, tb_size_t 
     tb_stream_t* stream = tb_stream_cast(self);
     tb_assert_and_check_return_val(stream, -1);
 
-    // done
-    tb_char_t   ch = 0;
-    tb_char_t*  p = data;
-    while ((TB_STATE_OPENED == tb_atomic_get(&stream->istate)))
-    {
-        // read char
-        if (!tb_stream_bread_s8(self, (tb_sint8_t*)&ch)) break;
+    // init static buffer 
+    tb_static_buffer_t buffer;
+    if (!tb_static_buffer_init(&buffer, (tb_byte_t*)data, size)) return -1;
 
-        // is line?
-        if (ch == '\n') 
+    // read line
+    tb_bool_t   eof = tb_false;
+    tb_byte_t*  line = tb_null;
+    while ((TB_STATE_OPENED == tb_atomic32_get(&stream->istate)))
+    {
+        tb_long_t real = tb_stream_peek(self, &line, tb_min(size, TB_STREAM_BLOCK_MAXN));
+        if (real > 0)
         {
-            // finish line
-            if (p > data && p[-1] == '\r')
-                p--;
-            *p = '\0';
-    
-            // ok
-            return p - data;
+            tb_assert(real <= size);
+            tb_char_t const* e = tb_strnchr((tb_char_t const*)line, real, '\n');
+            if (e)
+            {
+                tb_size_t n = (tb_byte_t const*)e + 1 - line;
+                if (!tb_stream_skip(self, n)) return -1;
+                tb_static_buffer_memncat(&buffer, line, n);
+                break;
+            }
+            else 
+            {
+                if (!tb_stream_skip(self, real)) return -1;
+                tb_static_buffer_memncat(&buffer, line, real);
+            }
         }
-        // append char to line
+        else if (!real)
+        {
+            real = tb_stream_wait(self, TB_STREAM_WAIT_READ, tb_stream_timeout(self));
+            if (real <= 0)
+            {
+                eof = tb_true;
+                break;
+            }
+        }
         else 
         {
-            if ((p - data) < size - 1) *p++ = ch;
-
-            // line end?
-            if (!ch) break;
+            eof = tb_true;
+            break;
         }
     }
 
     // killed?
-    if ((TB_STATE_KILLING == tb_atomic_get(&stream->istate))) return -1;
-
-    // end
-    if (p < data + size) *p = '\0';
+    if ((TB_STATE_KILLING == tb_atomic32_get(&stream->istate))) return -1;
 
     // ok?
-    return !tb_stream_beof(self)? p - data : -1;
+    tb_size_t linesize = tb_static_buffer_size(&buffer);
+    if (linesize) 
+    {
+        if (linesize && data[linesize - 1] == '\n') linesize--;
+        if (linesize && data[linesize - 1] == '\r') linesize--;
+        data[linesize] = '\0';
+        return linesize;
+    }
+    else return (eof || tb_stream_beof(self))? -1 : 0;
 }
 tb_long_t tb_stream_bwrit_line(tb_stream_ref_t self, tb_char_t* data, tb_size_t size)
 {

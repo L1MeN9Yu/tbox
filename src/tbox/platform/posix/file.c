@@ -91,6 +91,7 @@ tb_file_ref_t tb_file_init(tb_char_t const* path, tb_size_t mode)
             fd = open(path, flags, modes);
 #endif
     }
+    tb_check_return_val(fd >= 0, tb_null);
  
     // trace
     tb_trace_d("open: %p", tb_fd2file(fd));
@@ -104,7 +105,7 @@ tb_bool_t tb_file_exit(tb_file_ref_t file)
     tb_assert_and_check_return_val(file, tb_false);
 
     // trace
-    tb_trace_d("clos: %p", file);
+    tb_trace_d("close: %p", file);
 
     // close it
     tb_bool_t ok = !close(tb_file2fd(file))? tb_true : tb_false;
@@ -122,7 +123,7 @@ tb_bool_t tb_file_exit(tb_file_ref_t file)
 tb_long_t tb_file_read(tb_file_ref_t file, tb_byte_t* data, tb_size_t size)
 {
     // check
-    tb_assert_and_check_return_val(file, -1);
+    tb_assert_and_check_return_val(file && data, -1);
 
     // read it
     return read(tb_file2fd(file), data, size);
@@ -130,7 +131,7 @@ tb_long_t tb_file_read(tb_file_ref_t file, tb_byte_t* data, tb_size_t size)
 tb_long_t tb_file_writ(tb_file_ref_t file, tb_byte_t const* data, tb_size_t size)
 {
     // check
-    tb_assert_and_check_return_val(file, -1);
+    tb_assert_and_check_return_val(file && data, -1);
 
     // writ it
     return write(tb_file2fd(file), data, size);

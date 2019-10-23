@@ -25,11 +25,14 @@
  */
 #include "platform.h"
 #include "impl.h"
+#include "../cpu.h"
 #include "../exception.h"
 #include "../cache_time.h"
 #include "../../network/network.h"
-#ifdef TB_CONFIG_OS_ANDROID
+#if defined(TB_CONFIG_OS_ANDROID)
 #   include "../android/android.h"
+#elif defined(TB_CONFIG_OS_WINDOWS)
+#   include "../windows/windows.h"
 #endif
 
 /* //////////////////////////////////////////////////////////////////////////////////////
@@ -38,9 +41,11 @@
 
 tb_bool_t tb_platform_init_env(tb_handle_t priv)
 {
-    // init android envirnoment
-#ifdef TB_CONFIG_OS_ANDROID
+    // init the current platform envirnoment
+#if defined(TB_CONFIG_OS_ANDROID)
     if (!tb_android_init_env(priv)) return tb_false;
+#elif defined(TB_CONFIG_OS_WINDOWS)
+    if (!tb_windows_init_env()) return tb_false;
 #endif
 
     // init socket envirnoment
@@ -59,6 +64,11 @@ tb_bool_t tb_platform_init_env(tb_handle_t priv)
     // init exception envirnoment
 #ifdef TB_CONFIG_EXCEPTION_ENABLE
     if (!tb_exception_init_env()) return tb_false;
+#endif
+
+    // init cpu count/cache
+#ifndef TB_CONFIG_MICRO_ENABLE
+    (tb_void_t)tb_cpu_count();
 #endif
 
     // ok
@@ -84,9 +94,11 @@ tb_void_t tb_platform_exit_env()
     // exit socket envirnoment
     tb_socket_exit_env();
 
-    // exit android envirnoment
-#ifdef TB_CONFIG_OS_ANDROID
+    // exit the current platform envirnoment
+#if defined(TB_CONFIG_OS_ANDROID)
     tb_android_exit_env();
+#elif defined(TB_CONFIG_OS_WINDOWS)
+    tb_windows_exit_env();
 #endif
 }
 

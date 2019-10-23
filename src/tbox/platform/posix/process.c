@@ -23,6 +23,9 @@
  * includes
  */
 #include "prefix.h"
+#include "../file.h"
+#include "../path.h"
+#include "../time.h"
 #include "../process.h"
 #include "../environment.h"
 #include <fcntl.h>
@@ -38,6 +41,13 @@
 #endif
 
 /* //////////////////////////////////////////////////////////////////////////////////////
+ * macros
+ */
+
+// pipe file to fd
+#define tb_pipefile2fd(file)            (tb_int_t)((file)? (((tb_long_t)(file)) - 1) : -1)
+
+/* //////////////////////////////////////////////////////////////////////////////////////
  * types
  */
 
@@ -47,8 +57,8 @@ typedef struct __tb_process_t
     // the pid
     pid_t                       pid;
 
-    // the attributes
-    tb_process_attr_t           attr;
+    // the user private data
+    tb_cpointer_t               priv;
 
 #ifdef TB_CONFIG_POSIX_HAVE_POSIX_SPAWNP
     // the spawn attributes
@@ -56,12 +66,6 @@ typedef struct __tb_process_t
 
     // the spawn action
     posix_spawn_file_actions_t  spawn_action;
-#else
-    // the redirect stdout fd
-    tb_int_t                    outfd;
-
-    // the redirect stderr fd
-    tb_int_t                    errfd;
 #endif
 
 }tb_process_t; 
@@ -123,15 +127,8 @@ tb_process_ref_t tb_process_init(tb_char_t const* pathname, tb_char_t const* arg
         process = tb_malloc0_type(tb_process_t);
         tb_assert_and_check_break(process);
 
-        // init attributes
-        if (attr)
-        {
-            // save it
-            process->attr = *attr;
-
-            // do not save envp, maybe stack pointer
-            process->attr.envp = tb_null;
-        }
+        // save the user private data
+        if (attr) process->priv = attr->priv;
 
         // init spawn attributes
         posix_spawnattr_init(&process->spawn_attr);
@@ -139,30 +136,50 @@ tb_process_ref_t tb_process_init(tb_char_t const* pathname, tb_char_t const* arg
         // init spawn action
         posix_spawn_file_actions_init(&process->spawn_action);
 
-        // redirect the stdout
-        if (attr && attr->outfile)
+        // set attributes
+        if (attr)
         {
-            // open stdout
-            tb_int_t result = posix_spawn_file_actions_addopen(&process->spawn_action, STDOUT_FILENO, attr->outfile, tb_process_file_flags(attr->outmode), tb_process_file_modes(attr->outmode));
-            tb_assertf_pass_and_check_break(!result, "cannot redirect stdout to file: %s, error: %d", attr->outfile, result);
-        }
+            // redirect the stdout
+            if (attr->outtype == TB_PROCESS_REDIRECT_TYPE_FILEPATH && attr->outpath)
+            {
+                // open stdout
+                tb_int_t result = posix_spawn_file_actions_addopen(&process->spawn_action, STDOUT_FILENO, attr->outpath, tb_process_file_flags(attr->outmode), tb_process_file_modes(attr->outmode));
+                tb_assertf_pass_and_check_break(!result, "cannot redirect stdout to file: %s, error: %d", attr->outpath, result);
+            }
+            else if ((attr->outtype == TB_PROCESS_REDIRECT_TYPE_PIPE && attr->outpipe) ||
+                     (attr->outtype == TB_PROCESS_REDIRECT_TYPE_FILE && attr->outfile))
+            {
+                // duplicate outpipe/file fd to stdout in the child process
+                tb_int_t outfd = attr->outtype == TB_PROCESS_REDIRECT_TYPE_PIPE? tb_pipefile2fd(attr->outpipe) : tb_file2fd(attr->outfile);
+                posix_spawn_file_actions_adddup2(&process->spawn_action, outfd, STDOUT_FILENO);
+                posix_spawn_file_actions_addclose(&process->spawn_action, outfd);
+            }
 
-        // redirect the stderr
-        if (attr && attr->errfile)
-        {
-            // open stderr
-            tb_int_t result = posix_spawn_file_actions_addopen(&process->spawn_action, STDERR_FILENO, attr->errfile, tb_process_file_flags(attr->errmode), tb_process_file_modes(attr->errmode));
-            tb_assertf_pass_and_check_break(!result, "cannot redirect stderr to file: %s, error: %d", attr->errfile, result);
-        }
+            // redirect the stderr
+            if (attr->errtype == TB_PROCESS_REDIRECT_TYPE_FILEPATH && attr->errpath)
+            {
+                // open stderr
+                tb_int_t result = posix_spawn_file_actions_addopen(&process->spawn_action, STDERR_FILENO, attr->errpath, tb_process_file_flags(attr->errmode), tb_process_file_modes(attr->errmode));
+                tb_assertf_pass_and_check_break(!result, "cannot redirect stderr to file: %s, error: %d", attr->errpath, result);
+            }
+            else if ((attr->errtype == TB_PROCESS_REDIRECT_TYPE_PIPE && attr->errpipe) ||
+                     (attr->errtype == TB_PROCESS_REDIRECT_TYPE_FILE && attr->errfile))
+            {
+                // duplicate errpipe/file fd to stderr in the child process
+                tb_int_t errfd = attr->errtype == TB_PROCESS_REDIRECT_TYPE_PIPE? tb_pipefile2fd(attr->errpipe) : tb_file2fd(attr->errfile);
+                posix_spawn_file_actions_adddup2(&process->spawn_action, errfd, STDERR_FILENO);
+                posix_spawn_file_actions_addclose(&process->spawn_action, errfd);
+            }
 
-        // suspend it first
-        if (attr && attr->flags & TB_PROCESS_FLAG_SUSPEND)
-        {
+            // suspend it first
+            if (attr->flags & TB_PROCESS_FLAG_SUSPEND)
+            {
 #ifdef POSIX_SPAWN_START_SUSPENDED
-            posix_spawnattr_setflags(&process->spawn_attr, POSIX_SPAWN_START_SUSPENDED);
+                posix_spawnattr_setflags(&process->spawn_attr, POSIX_SPAWN_START_SUSPENDED);
 #else
-            tb_assertf(0, "suspend process not supported!");
+                tb_assertf(0, "suspend process not supported!");
 #endif
+            }
         }
 
         // no given environment? uses the current user environment
@@ -207,15 +224,8 @@ tb_process_ref_t tb_process_init(tb_char_t const* pathname, tb_char_t const* arg
         process = tb_malloc0_type(tb_process_t);
         tb_assert_and_check_break(process);
 
-        // init attributes
-        if (attr)
-        {
-            // save it
-            process->attr = *attr;
-
-            // do not save envp, maybe stack pointer
-            process->attr.envp = tb_null;
-        }
+        // save the user private data
+        if (attr) process->priv = attr->priv;
 
         // fork it
 #if defined(TB_CONFIG_POSIX_HAVE_VFORK) && \
@@ -239,26 +249,48 @@ tb_process_ref_t tb_process_init(tb_char_t const* pathname, tb_char_t const* arg
             // check
             tb_assertf(!attr || !(attr->flags & TB_PROCESS_FLAG_SUSPEND), "suspend process not supported!");
 
-            // redirect the stdout
-            if (attr && attr->outfile)
+            // set attributes
+            if (attr)
             {
-                // open file
-                process->outfd = open(attr->outfile, tb_process_file_flags(attr->outmode), tb_process_file_modes(attr->outmode));
-                tb_assertf_pass_and_check_break(process->outfd, "cannot redirect stdout to file: %s, error: %d", attr->outfile, errno);
+                // redirect the stdout
+                if (attr->outtype == TB_PROCESS_REDIRECT_TYPE_FILEPATH && attr->outpath)
+                {
+                    // open file
+                    tb_int_t outfd = open(attr->outpath, tb_process_file_flags(attr->outmode), tb_process_file_modes(attr->outmode));
+                    tb_assertf_pass_and_check_break(outfd, "cannot redirect stdout to file: %s, error: %d", attr->outpath, errno);
 
-                // redirect it
-                dup2(process->outfd, STDOUT_FILENO);
-            }
+                    // redirect it
+                    dup2(outfd, STDOUT_FILENO);
+                    close(outfd);
+                }
+                else if ((attr->outtype == TB_PROCESS_REDIRECT_TYPE_PIPE && attr->outpipe) ||
+                         (attr->outtype == TB_PROCESS_REDIRECT_TYPE_FILE && attr->outfile))
+                {
+                    // duplicate outpipe fd to stdout in the child process
+                    tb_int_t outfd = attr->outtype == TB_PROCESS_REDIRECT_TYPE_PIPE? tb_pipefile2fd(attr->outpipe) : tb_file2fd(attr->outfile);
+                    dup2(outfd, STDOUT_FILENO);
+                    close(outfd);
+                }
 
-            // redirect the stderr
-            if (attr && attr->outfile)
-            {
-                // open file
-                process->errfd = open(attr->errfile, tb_process_file_flags(attr->errmode), tb_process_file_modes(attr->errmode));
-                tb_assertf_pass_and_check_break(process->errfd, "cannot redirect stderr to file: %s, error: %d", attr->errfile, errno);
+                // redirect the stderr
+                if (attr->errtype == TB_PROCESS_REDIRECT_TYPE_FILEPATH && attr->errpath)
+                {
+                    // open file
+                    tb_int_t errfd = open(attr->errpath, tb_process_file_flags(attr->errmode), tb_process_file_modes(attr->errmode));
+                    tb_assertf_pass_and_check_break(errfd, "cannot redirect stderr to file: %s, error: %d", attr->errpath, errno);
 
-                // redirect it
-                dup2(process->errfd, STDOUT_FILENO);
+                    // redirect it
+                    dup2(errfd, STDERR_FILENO);
+                    close(errfd);
+                }
+                else if ((attr->errtype == TB_PROCESS_REDIRECT_TYPE_PIPE && attr->errpipe) ||
+                         (attr->errtype == TB_PROCESS_REDIRECT_TYPE_FILE && attr->errfile))
+                {
+                    // duplicate errpipe fd to stderr in the child process
+                    tb_int_t errfd = attr->errtype == TB_PROCESS_REDIRECT_TYPE_PIPE? tb_pipefile2fd(attr->errpipe) : tb_file2fd(attr->errfile);
+                    dup2(errfd, STDERR_FILENO);
+                    close(errfd);
+                }
             }
 
             // get environment 
@@ -478,28 +510,11 @@ tb_void_t tb_process_exit(tb_process_ref_t self)
 
 #ifdef TB_CONFIG_POSIX_HAVE_POSIX_SPAWNP
 
-    // close the stdout
-    if (process->attr.outfile) posix_spawn_file_actions_addclose(&process->spawn_action, STDOUT_FILENO);
-    process->attr.outfile = tb_null;
-
-    // close the stderr
-    if (process->attr.errfile) posix_spawn_file_actions_addclose(&process->spawn_action, STDERR_FILENO);
-    process->attr.errfile = tb_null;
-
     // exit spawn attributes
     posix_spawnattr_destroy(&process->spawn_attr);
 
     // exit spawn action 
     posix_spawn_file_actions_destroy(&process->spawn_action);
-#else
-
-    // close stdout fd
-    if (process->outfd) close(process->outfd);
-    process->outfd = 0;
-
-    // close stderr fd
-    if (process->errfd) close(process->errfd);
-    process->errfd = 0;
 #endif
 
     // exit it
@@ -521,6 +536,22 @@ tb_void_t tb_process_kill(tb_process_ref_t self)
         tb_trace_noimpl();
 #endif
     }
+}
+tb_cpointer_t tb_process_priv(tb_process_ref_t self)
+{
+    // check
+    tb_process_t* process = (tb_process_t*)self;
+    tb_assert_and_check_return_val(process, tb_null);
+
+    return process->priv;
+}
+tb_void_t tb_process_priv_set(tb_process_ref_t self, tb_cpointer_t priv)
+{
+    // check
+    tb_process_t* process = (tb_process_t*)self;
+    tb_assert_and_check_return(process);
+
+    process->priv = priv;
 }
 tb_void_t tb_process_resume(tb_process_ref_t self)
 {

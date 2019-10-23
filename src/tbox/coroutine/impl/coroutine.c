@@ -31,6 +31,7 @@
  */
 #include "coroutine.h"
 #include "scheduler.h"
+#include "../../memory/memory.h"
 #if defined(__tb_valgrind__) && defined(TB_CONFIG_VALGRIND_HAVE_VALGRIND_STACK_REGISTER)
 #   include "valgrind/valgrind.h"
 #endif
@@ -42,8 +43,8 @@
 // the stack guard magic
 #define TB_COROUTINE_STACK_GUARD            (0xbeef)
 
-// the default stack size
-#define TB_COROUTINE_STACK_DEFSIZE          (8192 << 1)
+// the default stack size, @note we will allocate it from large/virtual allocator if size >= TB_VIRTUAL_MEMORY_DATA_MINN
+#define TB_COROUTINE_STACK_DEFSIZE          TB_VIRTUAL_MEMORY_DATA_MINN
 
 /* //////////////////////////////////////////////////////////////////////////////////////
  * implementation

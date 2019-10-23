@@ -27,6 +27,14 @@
 #include <math.h>
 
 /* //////////////////////////////////////////////////////////////////////////////////////
+ * macros
+ */
+#if defined(TB_CONFIG_LIBM_HAVE_LOG2F) && \
+    defined(TB_CONFIG_OS_ANDROID) && defined(__ANDROID_API__) && (__ANDROID_API__ < 18)
+#   undef TB_CONFIG_LIBM_HAVE_LOG2F
+#endif
+
+/* //////////////////////////////////////////////////////////////////////////////////////
  * implementation
  */
 tb_float_t tb_log2f(tb_float_t x)
